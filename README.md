@@ -4,7 +4,9 @@ Create diagramms for control theory in python.
 
 ## How to use it
 
-Download `regelungstechnik.py` and `example.py`.
+Download `regelungstechnik.py` and `example.py`. The example code should give you a good understanding of how the script works.
+
+## Example
 
 The example code imports `regelungstechnik` and creates transfer functions. It then plots the bode diagramm of these functions.
 
@@ -17,6 +19,12 @@ F = rt.make_prod_func([V, F_1, F_2])
 
 ![Canvas bode diagramm](bode_canvas.png)
 
+An empty bode diagramm can be used as a canvas for hand sketches. It only provides marks on the diagramm axis.
+
 ![Single bode diagramm](bode_single.png)
 
+This bode diagramm of the a transfer function `F` shows the absolute value in dB and the phase in degrees as the dotted line. 
+
 ![Multiple bode diagramm](bode_multiple.png)
+
+This bode diagramm shows `F` and additionaly the transfer function `F` is composed of. 
