@@ -27,4 +27,4 @@ This bode diagramm of the transfer function `F` shows the absolute value in dB a
 
 ![Multiple bode diagramm](bode_multiple.png)
 
-This bode diagramm shows `F` and additionaly the transfer function `F` is composed of. 
+This bode diagramm additionally shows all the transfer functions `F` is composed of.
