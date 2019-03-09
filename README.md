@@ -8,7 +8,7 @@ Download `regelungstechnik.py` and `example.py`. The example code should give yo
 
 ## Example
 
-The example code imports `regelungstechnik` and creates transfer functions. It then plots the bode diagramm of these functions.
+The example code imports `regelungstechnik as rt` and creates transfer functions. It then plots the bode diagramm of these functions.
 
 ```python
 V = rt.make_V_func(V=0.2)
