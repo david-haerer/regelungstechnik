@@ -110,6 +110,8 @@ def hue_intervall(num, saturation, value, start=0.0):
     start /= 360.0
 
     hues = np.arange(0.0, 1.0, 1.0 / num)
+    # The hues in the hsv color space are visually not evenly distributed.
+    # To compensate this effect, we calculate hue**1.5.
     for i in range(len(hues)):
         hues[i] = math.pow(hues[i], 1.5)
     
@@ -137,9 +139,9 @@ def make_phase_func(function, phi_min, phi_max):
     '''
     def phase_func(omega):
         phi = math.degrees(cmath.phase(function(1j * omega)))
-        if phi > phi_max:
+        while phi > phi_max:
             phi -= 360
-        if phi < phi_min:
+        while phi < phi_min:
             phi += 360
         return phi
     return phase_func
