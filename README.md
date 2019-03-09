@@ -23,7 +23,7 @@ An empty bode diagramm can be used as a canvas for hand sketches. It only provid
 
 ![Single bode diagramm](bode_single.png)
 
-This bode diagramm of the a transfer function `F` shows the absolute value in dB and the phase in degrees as the dotted line. 
+This bode diagramm of the transfer function `F` shows the absolute value in dB and the phase in degrees as the dotted line. 
 
 ![Multiple bode diagramm](bode_multiple.png)
 
