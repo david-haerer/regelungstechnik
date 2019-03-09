@@ -105,17 +105,19 @@ def log_intervall(a=1.0, b=10.0, num=50.0, base=10.0):
 
 def hue_intervall(num, saturation, value, start=0.0):
     '''
-    Returns a list of rgb triples visually evenly spaced in regard of hues, starting from given color hue start.
+    Returns a list of rgb triples visually evenly spaced in regard of hues; start markes first color hue in degrees.
     '''
+    start /= 360.0
+
     hues = np.arange(0.0, 1.0, 1.0 / num)
     for i in range(len(hues)):
-        hues[i] = 360 * math.pow(hues[i], 1.467)
-
+        hues[i] = math.pow(hues[i], 1.5)
+    
     colors = []
     for hue in hues:
-        hsv = ((hue + start) % 360.0, saturation, value)
+        hsv = ((hue + start) % 1.0, saturation, value)
         colors.append(col.hsv_to_rgb(hsv))
-    
+       
     return colors
     
 
@@ -233,7 +235,7 @@ class Bode(object):
 
         for i in range(0, len(self.dB)):
             ax_db.plot(self.omega, self.dB[i], label=r"$|$" + self.labels[i] + r"$|$", color=self.colors[i], linewidth=2)
-            ax_phi.plot(self.omega, self.phi[i], label=r"$\varphi($" + self.labels[i] + r"$)$", color=self.colors[i], linewidth=2, linestyle=":")
+            ax_phi.plot(self.omega, self.phi[i], label=r"$\varphi ($" + self.labels[i] + r"$)$", color=self.colors[i], linewidth=2, linestyle=":")
 
         ax_db.set_ylim([self.db_lim[0], self.db_lim[-1]])
         ax_db.set_yticks(self.db_lim)
