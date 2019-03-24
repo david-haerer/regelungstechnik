@@ -402,7 +402,7 @@ class StepResponse(object):
             self.steps.append(step_response)
 
 
-    def plot(self, pick=None, v_min=None, v_max=None):
+    def plot(self, pick=None, min=None, max=None):
         """
         Returns matplotlib figure of the step responses.
         """
@@ -428,12 +428,12 @@ class StepResponse(object):
 
         ax.set_xlim(self.time[0], self.time[-1])
 
-        if v_min is None:
-            v_min = 0 if canvas else min([step.min() for step in steps])
-        if v_max is None:
-            v_max = 1 if canvas else max([step.max() for step in steps])
+        if min is None:
+            min = 0 if canvas else min([step.min() for step in steps])
+        if max is None:
+            max = 1 if canvas else max([step.max() for step in steps])
 
-        ax.set_ylim(v_min, v_max)
+        ax.set_ylim(min, max)
 
         ax.set_xlabel(r"$t \ / \ s$")
         ax.set_ylabel("Regelgröße")
@@ -446,37 +446,17 @@ class StepResponse(object):
         return fig
 
 
-    def save(self, pick=None, v_min=None, v_max=None,
+    def save(self, pick=None, min=None, max=None,
              path="", filename="plot.png"):
         """
         Creates and saves step response at path/filename.
         """
-        fig = self.plot(pick=pick, v_min=v_min, v_max=v_max)
+        fig = self.plot(pick=pick, min=min, max=max)
         fig.savefig(path + filename)
 
 
-    def show(self, pick=None, v_min=None, v_max=None):
+    def show(self, pick=None, min=None, max=None):
         """
         Creates and shows step response.
         """
-        self.plot(pick=pick, v_min=v_min, v_max=v_max).show()
-
-
-# Common usecases
-
-def triple_bode(specs, functions, labels, path="", name="example"):
-    """
-    Creates three bode plots:
-    - Empty canvas for hand sketches.
-    - Bode diagramm containing only the first transfer function.
-    - Bode diagramm of all transfer functions.
-    """
-
-    canvas = EmptyBode(specs=specs)
-    canvas.save(path=path, filename=name + "_canvas.png")
-
-    single = Bode(specs=specs, functions=[functions[0]], labels=[labels[0]])
-    single.save(path=path, filename=name + "_single.png")
-
-    multiple = Bode(specs=specs, functions=functions, labels=labels)
-    multiple.save(path=path, filename=name + "_multiple.png")
+        self.plot(pick=pick, min=min, max=max).show()
