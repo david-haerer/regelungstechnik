@@ -78,9 +78,9 @@ The last piece of code creates a Step-Response and saves several plots.
 
 ```python
 step = rt.StepResponse(functions, labels, duration=30e-3)
-step.save(pick=[], filename="response_canvas.png", v_max=0.225)
-step.save(pick=[0], filename="response_single.png", v_max=0.225)
-step.save(filename="response_all.png", v_max=1.6)
+step.save(pick=[], filename="response_canvas.png", max=0.225)
+step.save(pick=[0], filename="response_single.png", max=0.225)
+step.save(filename="response_all.png", max=1.6)
 ```
 
 ![Step-Response as a canvas](images/response_canvas.png)
