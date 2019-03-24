@@ -25,9 +25,11 @@ Download `regelungstechnik.py` and `main.py`. The example code in `main.py` shou
 <a name="example1"></a>
 ### Creating Transfer Functions
 
-The example code imports `regelungstechnik as rt` and creates transfer functions.
+The example code imports the Regelungstechnik module and creates transfer functions.
 
 ```python
+import regelungstechnik as rt
+
 F1 = rt.PT1(T=2e-3, V=0.2)
 F2 = rt.PT2(omega=1000, D=0.2)
 F = rt.prod([F1, F2])
