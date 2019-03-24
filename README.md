@@ -59,17 +59,17 @@ bode.save(pick=[0], path="images/", filename="bode_single.png")
 bode.save(path="images/", filename="bode_all.png")
 ```
 
-![Bode-Diagram as a canvas](images/bode_canvas.png)
-
 An empty Bode-Diagram can be used as a canvas for hand sketches. It only provides marks on the diagram axis.
 
-![Bode-Diagram of one transfer function](images/bode_single.png)
+![Bode-Diagram as a canvas](images/bode_canvas.png)
 
 This Bode-Diagram of the transfer function shows the absolute value in dB and the phase in degrees as the dotted line.
 
-![Bode-Diagram of all transfer functions](images/bode_all.png)
+![Bode-Diagram of one transfer function](images/bode_single.png)
 
 This Bode-Diagram shows all the created transfer functions for comparison.
+
+![Bode-Diagram of all transfer functions](images/bode_all.png)
 
 <a name="example3"></a>
 ### Creating Step-Responses
@@ -83,14 +83,14 @@ step.save(pick=[0], filename="response_single.png", max=0.225)
 step.save(filename="response_all.png", max=1.6)
 ```
 
-![Step-Response as a canvas](images/response_canvas.png)
-
 An empty Step-Response can be used as a canvas for hand sketches. It only provides marks on the diagram axis.
 
-![Step-Response of one transfer function](images/response_single.png)
+![Step-Response as a canvas](images/response_canvas.png)
 
 This Step-Response of the transfer function shows how the system reacts to the unit jump.
 
-![Step-Response of all transfer functions](images/response_all.png)
+![Step-Response of one transfer function](images/response_single.png)
 
 This Step-Response shows all the created transfer functions for comparison.
+
+![Step-Response of all transfer functions](images/response_all.png)
