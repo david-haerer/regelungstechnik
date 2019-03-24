@@ -121,7 +121,7 @@ def sum(functions):
     return F
 
 
-def feedback(F1, F2):
+def feedback_loop(F1, F2):
     """
     Returns the transfer function of the feedback loop
     F(s) = F1 / (1 + F1 * F2)
@@ -166,22 +166,7 @@ def phase(val, min, max):
     return phi
 
 
-# Linear, logarithmic and hue intervalls
-
-def intervall(a=0.0, b=1.0, delta=0.01, dtype=None):
-    """
-    Returns the np.linspace from a to b with step delta.
-    """
-    return np.linspace(a, b, num=(b - a) / delta + 1, dtype=dtype)
-
-
-def log_intervall(a=1.0, b=10.0, num=50.0, base=10.0, dtype=None):
-    """
-    Returns the np.logspace from base**a to base**b
-    with num samples per exponent increase.
-    """
-    return np.logspace(a, b, num=(b - a) * num, base=base, dtype=None)
-
+# Hue color intervall
 
 def hue_intervall(num, saturation, value, start=0.0):
     """
@@ -206,61 +191,6 @@ def hue_intervall(num, saturation, value, start=0.0):
 
 
 # Bode diagramm
-
-class EmptyBode(object):
-    """
-    Empyt bode diagramm for hand sketches.
-    """
-    def __init__(self, specs):
-        """
-        Creates intervalls for frequency omega,
-        absolute value in dB and phase phi.
-        """
-        self.omega = log_intervall(a=specs["start_exp"], b=specs["end_exp"])
-        self.db_lim = intervall(a=specs["db_min"], b=specs["db_max"],
-                                delta=specs["db_delta"])
-        self.phi_lim = intervall(a=specs["phi_min"], b=specs["phi_max"],
-                                 delta=specs["phi_delta"])
-
-    def plot(self):
-        """
-        Returns matplotlib figure of the bode diagramm.
-        """
-        fig, ax_db = plt.subplots(figsize=(8, 4.5), dpi=240)
-        fig.subplots_adjust(left=0.1, right=0.9, bottom=0.15, top=0.95)
-        ax_phi = ax_db.twinx()
-
-        ax_db.set_xscale("log")
-        ax_phi.set_xscale("log")
-
-        ax_db.set_ylim([self.db_lim[0], self.db_lim[-1]])
-        ax_db.set_yticks(self.db_lim)
-
-        ax_db.set_xlim(self.omega[0], self.omega[-1])
-
-        ax_phi.set_ylim([self.phi_lim[0], self.phi_lim[-1]])
-        ax_phi.set_yticks(self.phi_lim)
-
-        ax_db.set_xlabel(r"$\omega \ / \ \frac{1}{s}$")
-        ax_db.set_ylabel("Betrag / dB")
-        ax_phi.set_ylabel("Phase / °")
-
-        ax_db.grid(b=True, which="both", axis="both")
-
-        return fig
-
-    def save(self, path="", filename="plot.png"):
-        """
-        Creates and saves bode diagramm at path/filename.
-        """
-        self.plot().savefig(path + filename)
-
-    def show(self):
-        """
-        Creates and shows bode diagramm.
-        """
-        self.plot().show()
-
 
 class BodeDiagram(object):
     """
