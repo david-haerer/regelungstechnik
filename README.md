@@ -14,13 +14,16 @@ This python module is still under development and may change at any time without
     2. [Creating Bode-Diagrams](#example2)
     3. [Creating Step-Responses](#example3)
 
-## Getting Started <a name="getting-started"></a>
+<a name="getting-started"></a>
+## Getting Started
 
 Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
 
-## Example <a name="example"></a>
+<a name="example"></a>
+## Example
 
-### Creating Transfer Functions <a name="example1"></a>
+<a name="example1"></a>
+### Creating Transfer Functions
 
 The example code imports `regelungstechnik as rt` and creates transfer functions.
 
@@ -42,7 +45,8 @@ labels = [
 ]
 ```
 
-### Creating Bode-Diagrams <a name="example2"></a>
+<a name="example2"></a>
+### Creating Bode-Diagrams
 
 Next up, a Bode-Diagram is created and several plots saved.
 
@@ -65,7 +69,8 @@ This Bode-Diagram of the transfer function shows the absolute value in dB and th
 
 This Bode-Diagram shows all the created transfer functions for comparison.
 
-### Creating Step-Responses <a name="example3"></a>
+<a name="example3"></a>
+### Creating Step-Responses
 
 The last piece of code creates a Step-Response and saves several plots.
 
