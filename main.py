@@ -22,7 +22,8 @@ labels = [
 
 # Create a Bode-Diagram and save several plots
 
-bode = rt.BodeDiagram(functions, labels, start=1.0, stop=6.0, ticks=range(-7, 3))
+ticks = [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2]
+bode = rt.BodeDiagram(functions, labels, start=1.0, stop=6.0, ticks=ticks)
 bode.save(pick=[], path="images/", filename="bode_canvas.png")
 bode.save(pick=[0], path="images/", filename="bode_single.png")
 bode.save(path="images/", filename="bode_all.png")
