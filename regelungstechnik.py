@@ -24,7 +24,7 @@ def P(V, dB=False):
     """
     if dB:
         V = lin(V)
-    def F(s, discrete=False):
+    def F(s):
         s = np.asarray(s, dtype=np.complex64)
         return V * np.ones(shape=s.shape, dtype=np.complex64)
     return F
@@ -34,7 +34,7 @@ def D(T):
     """
     Returns the transfer function F(s) = T * s.
     """
-    def F(s, discrete=False):
+    def F(s):
         s = np.asarray(s, dtype=np.complex64)
         return T * s
     return F
@@ -44,16 +44,12 @@ def I(T):
     """
     Returns the transfer function F(s) = 1 / Ts.
     """
-    print("Creating I")
-    def F(s, discrete=True):
-        print("Evaluating I")
-        s = np.asarray(s, dtype=np.complex64)
-        if discrete:
-            val = np.zeros(s.size)
-            duration = 2j * np.pi / s[1]
-            val[s == 0] = duration / T
-            return val
-        return 1 / (T * s)
+        def F(s):
+                s = np.asarray(s, dtype=np.complex64)
+        duration = 2j * np.pi / (s[1] - s[0])
+        val = duration / T * np.ones(s.size, dtype=np.complex64)
+        val[s != 0] = 1 / (T * s[s != 0])
+        return val
     return F
 
 
@@ -62,12 +58,10 @@ def PT1(T, V=1, dB=False):
     Returns the transfer function F(s) = V / (Ts + 1).
     V may be given in dB.
     """
-    print("Creating PT1")
-    if dB:
+        if dB:
         V = lin(V)
-    def F(s, discrete=False):
-        print("Evaluating PT1")
-        s = np.asarray(s, dtype=np.complex64)
+    def F(s):
+                s = np.asarray(s, dtype=np.complex64)
         return V / (T * s + 1)
     return F
 
@@ -78,12 +72,10 @@ def PT2(omega, D, V=1, dB=False):
     F(s) = V / ((s/omega)^2 + 2D/omega * s + 1).
     V may be given in dezibel.
     """
-    print("Creating PT2")
-    if dB:
+        if dB:
         V = lin(V)
-    def F(s, discrete=False):
-        print("Evaluating PT2")
-        s = np.asarray(s, dtype=np.complex64)
+    def F(s):
+                s = np.asarray(s, dtype=np.complex64)
         return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
     return F
 
@@ -95,7 +87,7 @@ def PD1(T, V=1, dB=False):
     """
     if dB:
         V = lin(V)
-    def F(s, discrete=False):
+    def F(s):
         s = np.asarray(s, dtype=np.complex64)
         return T * s + 1
     return F
@@ -106,7 +98,7 @@ def GENERAL(a=[1], b=[1]):
     Returns the transfer function
     F(s) = (... a[1] * s + a[0]) / (... b[1] * s + b[0])
     """
-    def F(s, discrete=False):
+    def F(s):
         s = np.asarray(s, dtype=np.complex64)
         counter = np.poly1d(a)
         denominator = np.poly1d(b)
@@ -120,13 +112,11 @@ def PROD(functions):
     Returns the product of the given transfer functions
     as a new transfer function.
     """
-    print("Creating PROD")
-    def F(s, discrete=True):
-        print("Evaluating PROD")
-        s = np.asarray(s, dtype=np.complex64)
+        def F(s):
+                s = np.asarray(s, dtype=np.complex64)
         prod = np.ones(s.shape, dtype=np.complex64)
         for F in functions:
-            prod *= F(s, discrete=discrete)
+            prod *= F(s)
         return prod
     return F
 
@@ -136,11 +126,11 @@ def SUM(functions):
     Returns the sum of the given transfer functions
     as a new transfer function.
     """
-    def F(s, discrete=False):
+    def F(s):
         s = np.asarray(s, dtype=np.complex64)
         sum = np.zeros(s.shape, dtype=np.complex64)
         for F in functions:
-            sum += F(s, discrete=discrete)
+            sum += F(s)
         return sum
     return F
 
@@ -150,9 +140,9 @@ def FEEDBACK_LOOP(F1, F2):
     Returns the transfer function of the feedback loop
     F(s) = F1 / (1 + F1 * F2)
     """
-    def F(s, discrete=False):
+    def F(s):
         s = np.asarray(s, dtype=np.complex64)
-        return F1(s, discrete=discrete) / (1 + F1(s, discrete=discrete) * F2(s, discrete=discrete))
+        return F1(s) / (1 + F1(s) * F2(s))
     return F
 
 
@@ -332,12 +322,11 @@ class StepResponse(object):
         Sets functions, labels and colors as attributes.
         Computes sample rate, time and omega from duration and N.
         """
-        print("Creating StepResponse")
-        self.functions = functions
+                self.functions = functions
         self.labels = labels
         self.colors = hue_intervall(len(functions), 1, 0.8)
 
-        N = 1024
+        N = 128
         sample_rate = N * 2 * np.pi / duration
 
         self.time = np.linspace(0, duration, N)
@@ -345,14 +334,12 @@ class StepResponse(object):
         omega = np.linspace(0, sample_rate, N)
         G = N // 2 + 1
         # omega = omega[0:G] # Nyquist sampling theorem
-        
-        #print("Delta t:", 1 / sample_rate, "Delta omega:", 1 / duration, "Sample Rate:", sample_rate)
-        
+
+        #
         self.steps = []
 
         for F in functions:
-            print("Evaluating TransferFunction")
-            # Inverse real fourier transform, only takes lower half of spectrum
+                        # Inverse real fourier transform, only takes lower half of spectrum
             spectrum = F(1j * omega)
             spectrum = spectrum[0:G]
             impulse_response = np.fft.irfft(spectrum)
