@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import math
-import cmath
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
@@ -18,14 +17,14 @@ plt.rcParams["text.usetex"] = True
 
 # Elementary transfer functions
 
-def V(V, dB=False):
+def P(V, dB=False):
     """
     Returns the transfer function F(s) = V.
     V may be given in dB.
     """
     if dB:
         V = lin(V)
-    def F(s):
+    def F(s, discrete=False):
         s = np.asarray(s, dtype=np.complex64)
         return V * np.ones(shape=s.shape, dtype=np.complex64)
     return F
@@ -35,7 +34,7 @@ def D(T):
     """
     Returns the transfer function F(s) = T * s.
     """
-    def F(s):
+    def F(s, discrete=False):
         s = np.asarray(s, dtype=np.complex64)
         return T * s
     return F
@@ -45,8 +44,15 @@ def I(T):
     """
     Returns the transfer function F(s) = 1 / Ts.
     """
-    def F(s):
+    print("Creating I")
+    def F(s, discrete=True):
+        print("Evaluating I")
         s = np.asarray(s, dtype=np.complex64)
+        if discrete:
+            val = np.zeros(s.size)
+            duration = 2j * np.pi / s[1]
+            val[s == 0] = duration / T
+            return val
         return 1 / (T * s)
     return F
 
@@ -56,9 +62,11 @@ def PT1(T, V=1, dB=False):
     Returns the transfer function F(s) = V / (Ts + 1).
     V may be given in dB.
     """
+    print("Creating PT1")
     if dB:
         V = lin(V)
-    def F(s):
+    def F(s, discrete=False):
+        print("Evaluating PT1")
         s = np.asarray(s, dtype=np.complex64)
         return V / (T * s + 1)
     return F
@@ -70,9 +78,11 @@ def PT2(omega, D, V=1, dB=False):
     F(s) = V / ((s/omega)^2 + 2D/omega * s + 1).
     V may be given in dezibel.
     """
+    print("Creating PT2")
     if dB:
         V = lin(V)
-    def F(s):
+    def F(s, discrete=False):
+        print("Evaluating PT2")
         s = np.asarray(s, dtype=np.complex64)
         return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
     return F
@@ -85,50 +95,64 @@ def PD1(T, V=1, dB=False):
     """
     if dB:
         V = lin(V)
-    def F(s):
+    def F(s, discrete=False):
         s = np.asarray(s, dtype=np.complex64)
         return T * s + 1
     return F
 
 
+def GENERAL(a=[1], b=[1]):
+    """
+    Returns the transfer function
+    F(s) = (... a[1] * s + a[0]) / (... b[1] * s + b[0])
+    """
+    def F(s, discrete=False):
+        s = np.asarray(s, dtype=np.complex64)
+        counter = np.poly1d(a)
+        denominator = np.poly1d(b)
+        return counter(s) / denominator(s)
+    return F
+
 # Composite transfer functions
 
-def prod(functions):
+def PROD(functions):
     """
     Returns the product of the given transfer functions
     as a new transfer function.
     """
-    def F(s):
+    print("Creating PROD")
+    def F(s, discrete=True):
+        print("Evaluating PROD")
         s = np.asarray(s, dtype=np.complex64)
         prod = np.ones(s.shape, dtype=np.complex64)
         for F in functions:
-            prod *= F(s)
+            prod *= F(s, discrete=discrete)
         return prod
     return F
 
 
-def sum(functions):
+def SUM(functions):
     """
     Returns the sum of the given transfer functions
     as a new transfer function.
     """
-    def F(s):
+    def F(s, discrete=False):
         s = np.asarray(s, dtype=np.complex64)
         sum = np.zeros(s.shape, dtype=np.complex64)
         for F in functions:
-            sum += F(s)
+            sum += F(s, discrete=discrete)
         return sum
     return F
 
 
-def feedback_loop(F1, F2):
+def FEEDBACK_LOOP(F1, F2):
     """
     Returns the transfer function of the feedback loop
     F(s) = F1 / (1 + F1 * F2)
     """
-    def F(s):
+    def F(s, discrete=False):
         s = np.asarray(s, dtype=np.complex64)
-        return F1(s) / (1 + F1(s) * F2(s))
+        return F1(s, discrete=discrete) / (1 + F1(s, discrete=discrete) * F2(s, discrete=discrete))
     return F
 
 
@@ -151,7 +175,7 @@ def lin(val):
 def phase(val, min, max):
     """
     Returns the phase value in degrees in the range between
-    min and max of the given values.
+    v_min and v_max of the given values.
     """
     phi = np.angle(val, deg=True)
     # Move phi down
@@ -219,9 +243,9 @@ class BodeDiagram(object):
 
         for F in functions:
             values = F(1j * self.omega)
-            min, max = self.phi_ticks[0], self.phi_ticks[-1]
+            phi_min, phi_max = self.phi_ticks[0], self.phi_ticks[-1]
             self.dBs.append(dB(values))
-            self.phis.append(phase(values, min, max))
+            self.phis.append(phase(values, phi_min, phi_max))
 
 
     def plot(self, pick=None):
@@ -308,6 +332,7 @@ class StepResponse(object):
         Sets functions, labels and colors as attributes.
         Computes sample rate, time and omega from duration and N.
         """
+        print("Creating StepResponse")
         self.functions = functions
         self.labels = labels
         self.colors = hue_intervall(len(functions), 1, 0.8)
@@ -318,13 +343,19 @@ class StepResponse(object):
         self.time = np.linspace(0, duration, N)
 
         omega = np.linspace(0, sample_rate, N)
-        omega = omega[0:N//2+1] # Nyquist sampling theorem
-
+        G = N // 2 + 1
+        # omega = omega[0:G] # Nyquist sampling theorem
+        
+        #print("Delta t:", 1 / sample_rate, "Delta omega:", 1 / duration, "Sample Rate:", sample_rate)
+        
         self.steps = []
 
         for F in functions:
+            print("Evaluating TransferFunction")
             # Inverse real fourier transform, only takes lower half of spectrum
-            impulse_response = np.fft.irfft(F(1j * omega))
+            spectrum = F(1j * omega)
+            spectrum = spectrum[0:G]
+            impulse_response = np.fft.irfft(spectrum)
 
             # Step response = Integrated impulse response
             step_response = impulse_response.cumsum()
@@ -332,7 +363,7 @@ class StepResponse(object):
             self.steps.append(step_response)
 
 
-    def plot(self, pick=None, min=None, max=None):
+    def plot(self, pick=None, v_min=None, v_max=None):
         """
         Returns matplotlib figure of the step responses.
         """
@@ -358,12 +389,12 @@ class StepResponse(object):
 
         ax.set_xlim(self.time[0], self.time[-1])
 
-        if min is None:
-            min = 0 if canvas else min([step.min() for step in steps])
-        if max is None:
-            max = 1 if canvas else max([step.max() for step in steps])
+        if v_min is None:
+            v_min = 0 if canvas else min([step.min() for step in steps])
+        if v_max is None:
+            v_max = 1 if canvas else max([step.max() for step in steps])
 
-        ax.set_ylim(min, max)
+        ax.set_ylim(v_min, v_max)
 
         ax.set_xlabel(r"$t \ / \ s$")
         ax.set_ylabel("Regelgröße")
@@ -376,17 +407,17 @@ class StepResponse(object):
         return fig
 
 
-    def save(self, pick=None, min=None, max=None,
+    def save(self, pick=None, v_min=None, v_max=None,
              path="", filename="plot.png"):
         """
         Creates and saves step response at path/filename.
         """
-        fig = self.plot(pick=pick, min=min, max=max)
+        fig = self.plot(pick=pick, v_min=v_min, v_max=v_max)
         fig.savefig(path + filename)
 
 
-    def show(self, pick=None, min=None, max=None):
+    def show(self, pick=None, v_min=None, v_max=None):
         """
         Creates and shows step response.
         """
-        self.plot(pick=pick, min=min, max=max).show()
+        self.plot(pick=pick, v_min=v_min, v_max=v_max).show()
