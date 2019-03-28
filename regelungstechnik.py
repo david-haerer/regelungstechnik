@@ -44,8 +44,8 @@ def I(T):
     """
     Returns the transfer function F(s) = 1 / Ts.
     """
-        def F(s):
-                s = np.asarray(s, dtype=np.complex64)
+    def F(s):
+        s = np.asarray(s, dtype=np.complex64)
         duration = 2j * np.pi / (s[1] - s[0])
         val = duration / T * np.ones(s.size, dtype=np.complex64)
         val[s != 0] = 1 / (T * s[s != 0])
@@ -58,10 +58,10 @@ def PT1(T, V=1, dB=False):
     Returns the transfer function F(s) = V / (Ts + 1).
     V may be given in dB.
     """
-        if dB:
+    if dB:
         V = lin(V)
     def F(s):
-                s = np.asarray(s, dtype=np.complex64)
+        s = np.asarray(s, dtype=np.complex64)
         return V / (T * s + 1)
     return F
 
@@ -72,10 +72,10 @@ def PT2(omega, D, V=1, dB=False):
     F(s) = V / ((s/omega)^2 + 2D/omega * s + 1).
     V may be given in dezibel.
     """
-        if dB:
+    if dB:
         V = lin(V)
     def F(s):
-                s = np.asarray(s, dtype=np.complex64)
+        s = np.asarray(s, dtype=np.complex64)
         return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
     return F
 
@@ -112,8 +112,8 @@ def PROD(functions):
     Returns the product of the given transfer functions
     as a new transfer function.
     """
-        def F(s):
-                s = np.asarray(s, dtype=np.complex64)
+    def F(s):
+        s = np.asarray(s, dtype=np.complex64)
         prod = np.ones(s.shape, dtype=np.complex64)
         for F in functions:
             prod *= F(s)
@@ -211,7 +211,7 @@ class BodeDiagram(object):
     Bode diagramm of an arbitrary number of transfer functions.
     """
     def __init__(self, functions, labels, start, stop, ticks,
-        dB_delta=20, phi_delta=45):
+        dB_delta=20, phi_delta=45, N=1024):
         """
         Takes a list of transfer functions with corresponding labels and
         creates a bode diagramm from 10**start to 10**stop and a given list
@@ -220,8 +220,6 @@ class BodeDiagram(object):
         self.functions = functions
         self.labels = labels
         self.colors = hue_intervall(len(functions), 1, 0.8)
-
-        N = 1024
 
         self.omega = np.logspace(start=start, stop=stop, num=N)
 
@@ -317,29 +315,26 @@ class StepResponse(object):
     """
     Step response of an arbitrary number of transfer functions.
     """
-    def __init__(self, functions, labels, duration):
+    def __init__(self, functions, labels, duration, N=1024):
         """
         Sets functions, labels and colors as attributes.
         Computes sample rate, time and omega from duration and N.
         """
-                self.functions = functions
+        self.functions = functions
         self.labels = labels
         self.colors = hue_intervall(len(functions), 1, 0.8)
 
-        N = 128
         sample_rate = N * 2 * np.pi / duration
 
         self.time = np.linspace(0, duration, N)
 
         omega = np.linspace(0, sample_rate, N)
         G = N // 2 + 1
-        # omega = omega[0:G] # Nyquist sampling theorem
 
-        #
         self.steps = []
 
         for F in functions:
-                        # Inverse real fourier transform, only takes lower half of spectrum
+            # Inverse real fourier transform, only takes lower half of spectrum
             spectrum = F(1j * omega)
             spectrum = spectrum[0:G]
             impulse_response = np.fft.irfft(spectrum)
