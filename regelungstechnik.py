@@ -77,6 +77,10 @@ def PT2(omega, D, V=1, dB=False):
     def F(s):
         s = np.asarray(s, dtype=np.complex64)
         return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
+        if D != 0:
+            return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
+        else:
+            duration = 2j * np.pi / (s[1] - s[0])
     return F
 
 
