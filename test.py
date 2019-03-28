@@ -14,5 +14,5 @@ T = 1
 I = rt.I(T=T)
 PT2 = rt.PT2(omega=2 * np.pi, D=0)
 
-step = rt.StepResponse([I, PT2], ["$I$", "$PT_2$"], duration=T, N=1024)
-step.save(pick=[0], filename="test.png")
+step = rt.StepResponse([I, PT2], ["$I$", "$PT_2$"], duration=4, N=1024)
+step.save(filename="test.png")

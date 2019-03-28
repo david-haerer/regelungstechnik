@@ -15,38 +15,65 @@ plt.rcParams["ytick.labelsize"] = 12
 plt.rcParams["text.usetex"] = True
 
 
+# Numpy
+
+fft = np.fft.rfft
+
+
+def ifft(spectrum):
+    N = spectrum.size // 2 + 1
+    return np.fft.irfft(spectrum[0:N])
+
+
+def np_assure(s, g):
+    s = np.asarray(s, dtype=np.complex64)
+    g = np.asarray(g, dtype=np.float64)
+    transform = s.shape == g.shape and s[0] == 0
+    return s, g, transform
+
 # Elementary transfer functions
 
 def P(V, dB=False):
     """
-    Returns the transfer function F(s) = V.
+    Returns the transfer function F(s, g=[]) = V.
     V may be given in dB.
     """
     if dB:
         V = lin(V)
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        if transform:
+            g[s == 0] = V
+            g[s != 0] = 0
         return V * np.ones(shape=s.shape, dtype=np.complex64)
     return F
 
 
 def D(T):
     """
-    Returns the transfer function F(s) = T * s.
+    Returns the transfer function F(s, g=[]) = T * s.
     """
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
-        return T * s
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        val = T * s
+        if transform:
+            g[:] = ifft(val)
+        return val
     return F
 
 
 def I(T):
     """
-    Returns the transfer function F(s) = 1 / Ts.
+    Returns the transfer function F(s, g=[]) = 1 / Ts.
     """
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        if transform:
+            g[:] = 1 / T * np.ones(s.size)
+
+        # DC coefficient must be set to last value of the step response
         duration = 2j * np.pi / (s[1] - s[0])
+        return np.where(s == 0, duration / T, 1 / (T * s))
         val = duration / T * np.ones(s.size, dtype=np.complex64)
         val[s != 0] = 1 / (T * s[s != 0])
         return val
@@ -55,59 +82,52 @@ def I(T):
 
 def PT1(T, V=1, dB=False):
     """
-    Returns the transfer function F(s) = V / (Ts + 1).
+    Returns the transfer function F(s, g=[]) = V / (Ts + 1).
     V may be given in dB.
     """
     if dB:
         V = lin(V)
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
-        return V / (T * s + 1)
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        val = V / (T * s + 1)
+        if transform:
+            g[:] = ifft(val)
+        return val
     return F
 
 
 def PT2(omega, D, V=1, dB=False):
     """
     Returns the transfer function
-    F(s) = V / ((s/omega)^2 + 2D/omega * s + 1).
+    F(s, g=[]) = V / ((s/omega)^2 + 2D/omega * s + 1).
     V may be given in dezibel.
     """
     if dB:
         V = lin(V)
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
-        return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
-        if D != 0:
-            return V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
-        else:
-            duration = 2j * np.pi / (s[1] - s[0])
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        val = V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
+        if transform:
+            g[:] = ifft(val)
+        return val
     return F
 
 
 def PD1(T, V=1, dB=False):
     """
-    Returns the transfer function F(s) = V * (Ts + 1).
+    Returns the transfer function F(s, g=[]) = V * (Ts + 1).
     V may be given in dezibel.
     """
     if dB:
         V = lin(V)
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
-        return T * s + 1
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        val = T * s + 1
+        if transform:
+            g[:] = ifft(val)
+        return val
     return F
 
-
-def GENERAL(a=[1], b=[1]):
-    """
-    Returns the transfer function
-    F(s) = (... a[1] * s + a[0]) / (... b[1] * s + b[0])
-    """
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
-        counter = np.poly1d(a)
-        denominator = np.poly1d(b)
-        return counter(s) / denominator(s)
-    return F
 
 # Composite transfer functions
 
@@ -116,11 +136,15 @@ def PROD(functions):
     Returns the product of the given transfer functions
     as a new transfer function.
     """
-    def F(s):
-        s = np.asarray(s, dtype=np.complex64)
-        prod = np.ones(s.shape, dtype=np.complex64)
+    def F(s, g=[]):
+        s, g, transform = np_assure(s, g)
+        prod = np.ones(s.size, dtype=np.complex64)
+        imp_res = np.zeros(s.size, dtype=np.float64)
+        imp_res[0] = 1
         for F in functions:
-            prod *= F(s)
+            prod *= F(s, g=g)
+            if transform:
+                imp_res =
         return prod
     return F
 
@@ -130,11 +154,11 @@ def SUM(functions):
     Returns the sum of the given transfer functions
     as a new transfer function.
     """
-    def F(s):
+    def F(s, g=[]):
         s = np.asarray(s, dtype=np.complex64)
         sum = np.zeros(s.shape, dtype=np.complex64)
         for F in functions:
-            sum += F(s)
+            sum += F(s, g=[])
         return sum
     return F
 
@@ -142,9 +166,9 @@ def SUM(functions):
 def FEEDBACK_LOOP(F1, F2):
     """
     Returns the transfer function of the feedback loop
-    F(s) = F1 / (1 + F1 * F2)
+    F(s, g=[]) = F1 / (1 + F1 * F2)
     """
-    def F(s):
+    def F(s, g=[]):
         s = np.asarray(s, dtype=np.complex64)
         return F1(s) / (1 + F1(s) * F2(s))
     return F
@@ -329,18 +353,15 @@ class StepResponse(object):
         self.colors = hue_intervall(len(functions), 1, 0.8)
 
         sample_rate = N * 2 * np.pi / duration
-
         self.time = np.linspace(0, duration, N)
-
         omega = np.linspace(0, sample_rate, N)
-        G = N // 2 + 1
 
         self.steps = []
 
         for F in functions:
             # Inverse real fourier transform, only takes lower half of spectrum
             spectrum = F(1j * omega)
-            spectrum = spectrum[0:G]
+            spectrum = spectrum[0 : N // 2 + 1]
             impulse_response = np.fft.irfft(spectrum)
 
             # Step response = Integrated impulse response
