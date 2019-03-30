@@ -6,7 +6,7 @@ import regelungstechnik as rt
 
 F1 = rt.PT1(T=2e-3, V=0.2)
 F2 = rt.PT2(omega=1000, D=0.2)
-F = rt.prod([F1, F2])
+F = rt.PROD([F1, F2])
 
 
 # Make a list of the transfer functions with corresponding labels

@@ -19,21 +19,14 @@ plt.rcParams["text.usetex"] = True
 
 fft = np.fft.rfft
 
-
 def ifft(spectrum):
     N = spectrum.size // 2 + 1
     return np.fft.irfft(spectrum[0:N])
 
 
-def np_assure(s, g):
-    s = np.asarray(s, dtype=np.complex64)
-    g = np.asarray(g, dtype=np.float64)
-    transform = s.shape == g.shape and s[0] == 0
-    return s, g, transform
-
 # Elementary transfer functions
 
-def P(V, dB=False):
+def P(V, dB=False, tf=True, imp=False):
     """
     Returns the transfer function F(s, g=[]) = V.
     V may be given in dB.
@@ -41,8 +34,9 @@ def P(V, dB=False):
     if dB:
         V = lin(V)
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
-        if transform:
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
+        if g.shape == s.shape:
             g[s == 0] = V
             g[s != 0] = 0
         return V * np.ones(shape=s.shape, dtype=np.complex64)
@@ -54,9 +48,10 @@ def D(T):
     Returns the transfer function F(s, g=[]) = T * s.
     """
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
         val = T * s
-        if transform:
+        if g.shape == s.shape:
             g[:] = ifft(val)
         return val
     return F
@@ -67,8 +62,9 @@ def I(T):
     Returns the transfer function F(s, g=[]) = 1 / Ts.
     """
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
-        if transform:
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
+        if g.shape == s.shape:
             g[:] = 1 / T * np.ones(s.size)
 
         # DC coefficient must be set to last value of the step response
@@ -88,9 +84,10 @@ def PT1(T, V=1, dB=False):
     if dB:
         V = lin(V)
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
         val = V / (T * s + 1)
-        if transform:
+        if g.shape == s.shape:
             g[:] = ifft(val)
         return val
     return F
@@ -105,10 +102,17 @@ def PT2(omega, D, V=1, dB=False):
     if dB:
         V = lin(V)
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
         val = V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
-        if transform:
-            g[:] = ifft(val)
+        if g.shape == s.shape:
+            if D == 0:
+                g[:] = 1 / (2 * omega) * np.sin(omega * t)
+            elif D < 1:
+                t = np.linspace(0, 1 / s[1], s.size)
+                g[:] = 1 / (2 * omega * np.sqrt(1 - D*D))
+                g[:] *= np.exp(-1 * D * omega * t)
+                g[:] *= np.sin(np.sqrt(1 - D*D) * omega * t)
         return val
     return F
 
@@ -121,9 +125,10 @@ def PD1(T, V=1, dB=False):
     if dB:
         V = lin(V)
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
         val = T * s + 1
-        if transform:
+        if g.shape == s.shape:
             g[:] = ifft(val)
         return val
     return F
@@ -137,14 +142,16 @@ def PROD(functions):
     as a new transfer function.
     """
     def F(s, g=[]):
-        s, g, transform = np_assure(s, g)
+        s = np.asarray(s, dtype=np.complex64)
+        g = np.asarray(g, dtype=np.float64)
         prod = np.ones(s.size, dtype=np.complex64)
         imp_res = np.zeros(s.size, dtype=np.float64)
         imp_res[0] = 1
         for F in functions:
             prod *= F(s, g=g)
-            if transform:
-                imp_res =
+            if g.shape == s.shape:
+                if D == 0:
+                    imp_res[]
         return prod
     return F
 
@@ -359,7 +366,7 @@ class StepResponse(object):
         self.steps = []
 
         for F in functions:
-            # Inverse real fourier transform, only takes lower half of spectrum
+            # Inverse real fourier g.shape == s.shape, only takes lower half of spectrum
             spectrum = F(1j * omega)
             spectrum = spectrum[0 : N // 2 + 1]
             impulse_response = np.fft.irfft(spectrum)
