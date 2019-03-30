@@ -8,11 +8,28 @@ This python module is still under development and may change at any time without
 
 ## Contents
 
-1. [Getting Started](#getting-started)
-2. [Example](#example)
+1. [Names](#names)
+2. [Getting Started](#getting-started)
+3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
     2. [Creating Bode-Diagrams](#example2)
     3. [Creating Step-Responses](#example3)
+
+
+<a name="names"></a>
+## Names
+
+In this project, the following names are used:
+
+- Basic elements
+    - `P` - gain
+    - `I` - integrator
+    - `D` - differentiator
+    - `PTn` - low pass of order `n`
+    - ...
+- `H(s)` - transfer function
+- `h(t)` - impulse response to the dirac impulse `delta(t)`
+- `w(t)` - step response to the unit step `step(t)`
 
 <a name="getting-started"></a>
 ## Getting Started
