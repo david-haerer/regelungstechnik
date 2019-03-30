@@ -26,10 +26,12 @@ In this project, the following names are used:
     - `I` - integrator
     - `D` - differentiator
     - `PTn` - low pass of order `n`
-    - ...
-- `H(s)` - transfer function
-- `h(t)` - impulse response to the dirac impulse `delta(t)`
-- `w(t)` - step response to the unit step `step(t)`
+    - and so on ...
+- Complex frequency `s`.
+- Transfer function `H(s)`.
+- Time `t`.
+- Impulse response `h(t)` to the dirac impulse.
+- Step response `w(t)` to the unit step.
 
 <a name="getting-started"></a>
 ## Getting Started
