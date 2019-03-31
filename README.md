@@ -8,7 +8,7 @@ This python module is still under development and may change at any time without
 
 ## Contents
 
-1. [Names](#names)
+1. [Naming](#names)
 2. [Getting Started](#getting-started)
 3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
@@ -17,11 +17,13 @@ This python module is still under development and may change at any time without
 
 
 <a name="names"></a>
-## Names
+## Naming
 
 In this project, the following names are used:
 
 - Dezibel `dB`
+- Lower case letters for sequences in the time domain, e.g. `y(t)`
+- Upper case letters for sequences in the frequency domain, e.g. `Y(omega)`
 - Basic elements
     - `P` - gain
     - `I` - integrator
