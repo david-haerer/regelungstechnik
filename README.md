@@ -12,7 +12,7 @@ This python module is still under development and may change at any time without
     1. [Quantities and Units](#units)
     2. [Sequences in the Time Domain](#time)
     3. [Sequences in the Frequency Domain](#frequency)
-    4. [Basic Elements](#basic elements)
+    4. [Basic Elements](#basic_elements)
 2. [Getting Started](#getting-started)
 3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
@@ -60,7 +60,7 @@ For sequences in the frequency domain, upper case letters are used.
 - Transfer function `H(t)`
 
 
-<a name="basic elements"></a>
+<a name="basic_elements"></a>
 ### Basic Elements
 
 - Gain `P`
