@@ -9,7 +9,7 @@ This python module is still under development and may change at any time without
 
 ## Contents
 
-1. [Getting Started](#getting-started)
+1. [Getting Started](#getting_started)
 2. [Naming](#names)
     1. [Labels](#labels)
     2. [Quantities and Units](#units)
@@ -25,7 +25,7 @@ This python module is still under development and may change at any time without
     2. [Nextup](#nextup)
 
 
-<a name="getting-started"></a>
+<a name="getting_started"></a>
 ## Getting Started
 
 Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
