@@ -19,7 +19,7 @@ This python module is still under development and may change at any time without
 <a name="names"></a>
 ## Naming
 
-In this project, the following names are used:
+In this project, the following naming is used:
 
 - Dezibel `dB`
 - Lower case letters for sequences in the time domain, e.g. `y(t)`
