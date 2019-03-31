@@ -9,6 +9,10 @@ This python module is still under development and may change at any time without
 ## Contents
 
 1. [Naming](#names)
+    1. [Quantities and Units](#units)
+    2. [Sequences in the Time Domain](#time)
+    3. [Sequences in the Frequency Domain](#frequency)
+    4. [Basic Elements](#basic elements)
 2. [Getting Started](#getting-started)
 3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
@@ -19,30 +23,61 @@ This python module is still under development and may change at any time without
 <a name="names"></a>
 ## Naming
 
-In this project, the following naming is used:
+In this project, the following naming is used.
 
-- Dezibel `dB`
-- Lower case letters for sequences in the time domain, e.g. `y(t)`
-- Upper case letters for sequences in the frequency domain, e.g. `Y(omega)`
-- Basic elements
-    - `P` - gain
-    - `I` - integrator
-    - `D` - differentiator
-    - `PTn` - low pass of order `n`
-    - and so on ...
-- Complex frequency `s`.
-- Transfer function `H(s)`.
-- Time `t`.
-- Impulse response `h(t)` to the dirac impulse.
-- Step response `w(t)` to the unit step.
+
+<a name="units"></a>
+### Quantities and Units
+
+- Gain or attention linear or in Dezibel `[dB]`
+- Time `t` in `[s]`.
+- Frequency `f` in `[Hz]`
+- Circular frequency `omega = 2pi * f` in `[/s]`
+- Complex frequency `s = sigma + 1j * omega` in `[/s]`.
+
+
+<a name="time"></a>
+### Sequences in the Time Domain
+
+For sequences in the time domain, lower case letters are used.
+
+- Dirac impulse `delta(t)`
+- Unit step `step(t)`
+- Ramp `ramp(t)`
+- Input `y(t)`
+- Output `x(t)`
+- Impulse response `h(t)`
+- Step response `w(t)`
+
+
+<a name="frequency"></a>
+### Sequences in the Frequency Domain
+
+For sequences in the frequency domain, upper case letters are used.
+
+- Input `Y(s)`
+- Output `X(s)`
+- Transfer function `H(t)`
+
+
+<a name="basic elements"></a>
+### Basic Elements
+
+- Gain `P`
+- Integrator `I`
+- Differentiator `D`
+- Low pass `PTn` of order `n`
+
 
 <a name="getting-started"></a>
 ## Getting Started
 
 Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
 
+
 <a name="example"></a>
 ## Example
+
 
 <a name="example1"></a>
 ### Creating Transfer Functions
