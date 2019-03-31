@@ -46,22 +46,54 @@ def unify(val):
 
 # String representations
 
-def str_V(V, lin=True, dB=True):
-    V, pre = unify(V)
+def str_V(V, lin=True, dB=True, prefix=True):
+    """
+    Convert V into a string representation.
+    Choose if you want the linear or dB value.
+    Choose if V shall get its metric prefix.
+    """
+    if prefix:
+        V, pre = unify(V)
+    else:
+        pre = ""
+
     val = "V"
+
     if lin:
         val += " = " + str(V) + pre
+
     if dB:
         val += " = " + str(dB(V)) + "dB"
+
     return val
 
-def str_T(T):
-    T, pre = unify(T)
+def str_T(T, prefix=True):
+    """
+    Convert T into a string representation.
+    Choose if T shall get its metric prefix.
+    """
+    if prefix:
+        T, pre = unify(T)
+    else:
+        pre = ""
+
     val = "T = " + str(T) + pre + "s"
 
-def str_omega(omega):
-    omega, pre = unify(omega)
+    return val
+
+def str_omega(omega, prefix=True):
+    """
+    Convert omega into a string representation.
+    Choose if omega shall get its metric prefix.
+    """
+    if prefix:
+        omega, pre = unify(omega)
+    else:
+        pre = ""
+
     val = "omega = " + str(omega) + pre + "/s"
+
+    return val
 
 
 # Basic functions and transformations
