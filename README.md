@@ -21,6 +21,7 @@ This python module is still under development and may change at any time without
 
 In this project, the following names are used:
 
+- Dezibel `dB`
 - Basic elements
     - `P` - gain
     - `I` - integrator

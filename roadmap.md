@@ -16,6 +16,7 @@ If something is `Done`, it is a stabel version that doesn't need immediate atten
 
 ## My Next Objective
 
-*Refactor transfer functions into basic elements that return transfer function or impulse response.*
+*Add h(t) and w(t) for PD1 and add PD2*
 
+- `Limbo`Refactor transfer functions into basic elements that return transfer function or impulse response.
 - `Done` Figure out the impulse response of a general PT2 transfer function.
