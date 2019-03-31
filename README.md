@@ -9,13 +9,13 @@ This python module is still under development and may change at any time without
 
 ## Contents
 
-1. [Naming](#names)
+1. [Getting Started](#getting-started)
+2. [Naming](#names)
     1. [Labels](#labels)
     2. [Quantities and Units](#units)
     3. [Sequences in the Time Domain](#time)
     4. [Sequences in the Frequency Domain](#frequency)
     5. [Basic Elements](#basic_elements)
-2. [Getting Started](#getting-started)
 3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
     2. [Creating Bode-Diagrams](#example2)
@@ -23,6 +23,12 @@ This python module is still under development and may change at any time without
 4. [Roadmap](#roadmap)
     1. [Overview](#overview)
     2. [Nextup](#nextup)
+
+
+<a name="getting-started"></a>
+## Getting Started
+
+Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
 
 
 <a name="names"></a>
@@ -82,12 +88,6 @@ For sequences in the frequency domain, upper case letters are used.
 - Low pass `PT2`
 - Allowance `PD1`
 - Allowance `PD2`
-
-
-<a name="getting-started"></a>
-## Getting Started
-
-Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
 
 
 <a name="example"></a>
