@@ -6,24 +6,36 @@ Create diagrams for control theory in python.
 
 This python module is still under development and may change at any time without notice!
 
+
 ## Contents
 
 1. [Naming](#names)
-    1. [Quantities and Units](#units)
-    2. [Sequences in the Time Domain](#time)
-    3. [Sequences in the Frequency Domain](#frequency)
-    4. [Basic Elements](#basic_elements)
+    1. [Labels](#labels)
+    2. [Quantities and Units](#units)
+    3. [Sequences in the Time Domain](#time)
+    4. [Sequences in the Frequency Domain](#frequency)
+    5. [Basic Elements](#basic_elements)
 2. [Getting Started](#getting-started)
 3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
     2. [Creating Bode-Diagrams](#example2)
     3. [Creating Step-Responses](#example3)
+4. [Roadmap](#roadmap)
+    1. [Overview](#overview)
+    2. [Nextup](#nextup)
 
 
 <a name="names"></a>
 ## Naming
 
 In this project, the following naming is used.
+
+<a name="labels"></a>
+### Labels
+
+- `Done` - This is a working feature.
+- `Limbo` - This feature is currently under development.
+- `ToDo` - This feature is on the project wishlist.
 
 
 <a name="units"></a>
@@ -155,3 +167,33 @@ This Step-Response of the transfer function shows how the system reacts to the u
 This Step-Response shows all the created transfer functions for comparison.
 
 ![Step-Response of all transfer functions](images/response_all.png)
+
+
+<a name="roadmap"></a>
+## Roadmap
+
+The goal is to relabel `ToDo` items into `Done` while having as few items as possible in `Limbo`.
+
+<a name="overview"></a>
+### Overview
+
+This project contains the following features:
+
+- `Limbo` Create and evaluate transfer functions
+- `Limbo` Evaluate the impulse response of a transfer function
+- `Limbo` Plot bode diagramms
+- `Limbo` Plot step responses
+- `ToDo` Add a license to the project.
+- `ToDo` Plot responses to arbitrary input functions
+- `ToDo` Website as GUI
+- `ToDo` Videos as explanations
+
+
+<a name="nextup"></a>
+### Nexup
+
+*Refactor composite transfer functions into composite element classes*
+
+- `Done` Add h(t) and w(t) for PD1 and add PD2.
+- `Done` Refactor transfer functions into basic elements that return transfer function or impulse response.
+- `Done` Figure out the impulse response of a general PT2 transfer function.
