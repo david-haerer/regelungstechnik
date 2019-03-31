@@ -15,19 +15,91 @@ plt.rcParams["ytick.labelsize"] = 12
 plt.rcParams["text.usetex"] = True
 
 
-# Numpy
+# Metric prefixes
 
-fft = np.fft.rfft
+def unify(val):
+    prefix = ["",
+              "k", "M", "G", "T", "P", "E", "Z", "Y",
+              "y", "z", "a", "f", "p", "n", "µ", "m"]
 
-def ifft(spectrum):
-    N = spectrum.size // 2 + 1
-    return np.fft.irfft(spectrum[0:N])
+    i = 0
+
+    val = np.asarray(val, dtype=np.float64)
+
+    # Multiple
+    if val.max() > 1:
+        while val.max() >= 1000:
+            val *= 1e-3
+            i += 1
+
+    # Fraction
+    elif val.max() < 1:
+        while val.max() < 1:
+            val *= 1e3
+            i -= 1
+
+    if val.size == 1:
+        val = float(val)
+
+    return val, prefix[i]
+
+
+# String representations
+
+def str_V(V, lin=True, dB=True):
+    V, pre = unify(V)
+    val = "V"
+    if lin:
+        val += " = " + str(V) + pre
+    if dB:
+        val += " = " + str(dB(V)) + "dB"
+    return val
+
+def str_T(T):
+    T, pre = unify(T)
+    val = "T = " + str(T) + pre + "s"
+
+def str_omega(omega):
+    omega, pre = unify(omega)
+    val = "omega = " + str(omega) + pre + "/s"
+
+
+# Basic functions and transformations
+
+def delta(t):
+    val = np.zeros(t.size, dtype=np.float64)
+    val[t == 0] = 1
+    return val
+
+def step(t):
+    val = np.ones(t.size, dtype=np.float64)
+    val[t < 0] = 0
+    return val
+
+def ramp(t):
+    val = np.copy(t)
+    val[t < 0] = 0
+    return val
+
+
+# Fourier transform
+
+def fft(y):
+    l = y.size // N + 1
+    val = np.fft.fft(y)
+    val[l:] = 0
+    return val
+
+def ifft(Y):
+    l = Y.size // N + 1
+    val = np.fft.irfft(Y[:l])
+    return val
 
 
 # Basic elements
 
 class BasicElement(object):
-    def __init__():
+    def __init__(self):
         """
         Template for a basic element.
         """
@@ -64,15 +136,20 @@ class BasicElement(object):
         self.counter = None
         self.denominator = None
 
+    def __str__(self):
+        val = "Basic Element"
+        return val
+
 
 class P(BasicElement):
-    def __init__(V=1, dB=False):
+    def __init__(self, V=1, dB=False):
         """
         The basic element P (proportional).
         V may be given in dB.
         """
         if dB:
             V = lin(V)
+
         self.V = V
 
         def H(s):
@@ -109,12 +186,19 @@ class P(BasicElement):
         self.counter = V
         self.denominator = 1
 
+    def __str__(self, lin=True, dB=True):
+        val = "P"
+        val += " with " + str_V(V, lin=lin, dB=dB)
+        return val
+
 
 class I(BasicElement):
-    def __init__(T=1):
+    def __init__(self, T=1):
         """
         The basic element I (integrator).
         """
+        self.T = T
+
         def H(s):
             """
             The transfer function H(s) = 1 / Ts.
@@ -148,12 +232,19 @@ class I(BasicElement):
         self.counter = 1
         self.denominator = D(T).H
 
+    def __str__(self):
+        val = "I"
+        val += " with " + str_T(T)
+        return val
+
 
 class D(BasicElement):
-    def __init__(T=1):
+    def __init__(self, T=1):
         """
         The basic element D (differentiator).
         """
+        self.T = T
+
         def H(s):
             """
             The transfer function H(s) = T * s.
@@ -188,15 +279,23 @@ class D(BasicElement):
         self.counter = H
         self.denominator = 1
 
+    def __str__(self):
+        val = "D"
+        val += " with " + str_T(T)
+        return val
+
 
 class PT1(BasicElement):
-    def __init__(T=1, V=1, dB=False):
+    def __init__(self, T=1, V=1, dB=False):
         """
         The basic element PT1 (low pass of order 1).
         V may be given in dB.
         """
         if dB:
             V = lin(V)
+
+        self.T = T
+        self.V = V
 
         def H(s):
             """
@@ -231,9 +330,15 @@ class PT1(BasicElement):
         self.counter = V
         self.denominator = PD1(T=T, V=V, dB=dB).H
 
+    def __str__(self, lin=True, dB=True):
+        val = "PT1"
+        val += " with " + str_V(V, lin=lin, dB=dB)
+        val += " and " + str_T(T)
+        return val
+
 
 class PT2(BasicElement):
-    def __init__(omega=1, D=1, V=1, dB=False):
+    def __init__(self, omega=1, D=1, V=1, dB=False):
         """
         The basic element PT2 (low pass of order 2).
         """
@@ -243,6 +348,10 @@ class PT2(BasicElement):
 
         if dB:
             V = lin(V)
+
+        self.omega = omega
+        self.D = D
+        self.V = V
 
         def H(s):
             """
@@ -315,6 +424,13 @@ class PT2(BasicElement):
         self.counter = V
         self.denominator = PD2(omega=omega, D=D, V=V, dB=dB).H
 
+    def __str__(self):
+        val = "PT2"
+        val += " with V = " + str(self.V) + " = " + str(dB(self.V)) + "dB"
+        val += " and omega = " + str(self.omega) + "/s"
+        val += " and D = " + str(self.D)
+        return val
+
 
 class PD1(BasicElement):
     def __init__(T=1, V=1, dB=False):
@@ -339,7 +455,7 @@ class PD1(BasicElement):
             The impulse response h(t).
             """
             t = np.asarray(t, dtype=np.float64)
-            val = None
+            val = V * delta(t)
             return val
         self.h = h
 
@@ -376,9 +492,7 @@ def PROD(functions):
         imp_res[0] = 1
         for F in functions:
             prod *= F(s, g=g)
-            if g.shape == s.shape:
-                if D == 0:
-                    imp_res[]
+
         return prod
     return F
 
