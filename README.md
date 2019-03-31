@@ -66,7 +66,10 @@ For sequences in the frequency domain, upper case letters are used.
 - Gain `P`
 - Integrator `I`
 - Differentiator `D`
-- Low pass `PTn` of order `n`
+- Low pass `PT1`
+- Low pass `PT2`
+- Allowance `PD1`
+- Allowance `PD2`
 
 
 <a name="getting-started"></a>
