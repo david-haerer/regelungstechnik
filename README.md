@@ -6,6 +6,7 @@ Create diagrams for control theory in python.
 
 This python module is still under development and may change at any time without notice!
 
+---
 
 ## Contents
 
@@ -24,12 +25,14 @@ This python module is still under development and may change at any time without
     1. [Overview](#overview)
     2. [Nextup](#nextup)
 
+---
 
 <a name="getting_started"></a>
 ## Getting Started
 
 Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
 
+---
 
 <a name="names"></a>
 ## Naming
@@ -47,7 +50,7 @@ In this project, the following naming is used.
 <a name="units"></a>
 ### Quantities and Units
 
-- Gain or attention linear or in Dezibel `[dB]`
+- Gain or damping linear or in Dezibel `[dB]`
 - Time `t` in `[s]`.
 - Frequency `f` in `[Hz]`
 - Circular frequency `omega = 2pi * f` in `[/s]`
@@ -89,6 +92,7 @@ For sequences in the frequency domain, upper case letters are used.
 - Allowance `PD1`
 - Allowance `PD2`
 
+---
 
 <a name="example"></a>
 ## Example
@@ -168,6 +172,7 @@ This Step-Response shows all the created transfer functions for comparison.
 
 ![Step-Response of all transfer functions](images/response_all.png)
 
+---
 
 <a name="roadmap"></a>
 ## Roadmap
@@ -190,10 +195,18 @@ This project contains the following features:
 
 
 <a name="nextup"></a>
-### Nexup
+### Nextup
 
 *Refactor composite transfer functions into composite element classes*
 
 - `Done` Add h(t) and w(t) for PD1 and add PD2.
 - `Done` Refactor transfer functions into basic elements that return transfer function or impulse response.
 - `Done` Figure out the impulse response of a general PT2 transfer function.
+
+
+<a name="missing"></a>
+### Missing
+
+The following features are missing due to technical difficulty. Optimistically they are `ToDo`or in `Limbo` but don't expect them anytime soon.
+
+- In `SUM(elements)` the attribute `roots` is `None`.

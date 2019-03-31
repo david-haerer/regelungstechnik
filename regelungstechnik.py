@@ -117,7 +117,7 @@ def str_f(f, prefix=True, text="f"):
     return val
 
 
-# Basic functions and transformations
+# Basic functions
 
 def delta(t):
     val = np.zeros(t.size, dtype=np.float64)
@@ -135,6 +135,14 @@ def ramp(t):
     return val
 
 
+# Integration
+
+def integrate(y, t):
+    delta = t[1] - t[0]
+    val = delta * y.cumsum()
+    return val
+
+
 # Fourier transform
 
 def fft(y):
@@ -149,12 +157,12 @@ def ifft(Y):
     return val
 
 
-# Basic elements
+# Element base class
 
-class BasicElement(object):
+class Element(object):
     def __init__(self):
         """
-        Template for a basic element.
+        Template for a element.
         """
         def H(s):
             """
@@ -186,15 +194,17 @@ class BasicElement(object):
         self.roots = None
         self.poles = None
 
-        self.counter = None
-        self.denominator = None
+        self.C = None
+        self.D = None
 
     def __str__(self):
-        val = "Basic Element"
+        val = "Element"
         return val
 
 
-class P(BasicElement):
+# Basic elements
+
+class P(Element):
     def __init__(self, V=1, dB=False):
         """
         The basic element P (proportional).
@@ -236,16 +246,15 @@ class P(BasicElement):
         self.roots = []
         self.poles = []
 
-        self.counter = V
-        self.denominator = 1
+        self.C = self
+        self.D = P()
 
     def __str__(self):
         val = "Gain P"
         val += " with " + str_V(self.V)
         return val
 
-
-class I(BasicElement):
+class I(Element):
     def __init__(self, T=1):
         """
         The basic element I (integrator).
@@ -282,16 +291,15 @@ class I(BasicElement):
         self.roots = []
         self.poles = [0 + 0j]
 
-        self.counter = 1
-        self.denominator = D(T).H
+        self.C = P()
+        self.D = D(T)
 
     def __str__(self):
         val = "Integrator I"
         val += " with " + str_T(self.T)
         return val
 
-
-class D(BasicElement):
+class D(Element):
     def __init__(self, T=1):
         """
         The basic element D (differentiator).
@@ -329,16 +337,15 @@ class D(BasicElement):
         self.roots = [0 + 0j]
         self.poles = []
 
-        self.counter = H
-        self.denominator = 1
+        self.C = self
+        self.D = P()
 
     def __str__(self):
         val = "Differentiator D"
         val += " with " + str_T(self.T)
         return val
 
-
-class PT1(BasicElement):
+class PT1(Element):
     def __init__(self, T=1, V=1, dB=False):
         """
         The basic element PT1 (low pass of order 1).
@@ -380,8 +387,8 @@ class PT1(BasicElement):
         self.roots = []
         self.poles = [-1 / T]
 
-        self.counter = V
-        self.denominator = PD1(T=T, V=V, dB=dB).H
+        self.C = P(V=V)
+        self.D = PD1(T=T)
 
     def __str__(self):
         val = "Low pass PT1 of order 1"
@@ -389,22 +396,21 @@ class PT1(BasicElement):
         val += " and " + str_T(self.T)
         return val
 
-
-class PT2(BasicElement):
+class PT2(Element):
     def __init__(self, omega=1, D=1, V=1, dB=False):
         """
         The basic element PT2 (low pass of order 2).
         V may be given in dB.
         """
         if D < 0:
-            print("Error: Attenuation must not be negative.")
+            print("Error: Damping must not be negative.")
             return
 
         if dB:
             V = lin(V)
 
         self.omega = omega
-        self.D = D
+        self.damping = D
         self.V = V
 
         def H(s):
@@ -418,7 +424,7 @@ class PT2(BasicElement):
 
         def h(t):
             """
-            The impulse response h(t) of a PT2 at different attenuations.
+            The impulse response h(t) of a PT2 at different dampings.
             """
             t = np.asarray(t, dtype=np.float64)
             if D == 0:
@@ -439,7 +445,7 @@ class PT2(BasicElement):
 
         def w(t):
             """
-            The step response w(t) of a PT2 at different attenuations.
+            The step response w(t) of a PT2 at different dampings.
             """
             t = np.asarray(t, dtype=np.float64)
             if D == 0:
@@ -475,18 +481,17 @@ class PT2(BasicElement):
             p2 = omega * np.sqrt(D ** 1 - 1)
             self.poles = [p1 - p2, p1 + p2]
 
-        self.counter = V
-        self.denominator = PD2(omega=omega, D=D, V=V, dB=dB).H
+        self.C = P(V=V)
+        self.D = PD2(omega=omega, D=D)
 
     def __str__(self):
         val = "Low pass PT2 of order 2"
         val += " with " + str_V(self.V)
         val += " and " + str_omega(self.omega)
-        val += " and " + str_V(self.D, dB=False, text="D")
+        val += " and " + str_V(self.damping, dB=False, text="D")
         return val
 
-
-class PD1(BasicElement):
+class PD1(Element):
     def __init__(T=1, V=1, dB=False):
         """
         The basic element PD1 (allowance of order 1).
@@ -528,8 +533,8 @@ class PD1(BasicElement):
         self.roots = [-1 / T]
         self.poles = []
 
-        self.counter = H
-        self.denominator = 1
+        self.C = self
+        self.D = P()
 
     def __str__(self):
         val = "Allowance PD1 of order 1"
@@ -537,22 +542,21 @@ class PD1(BasicElement):
         val += " and " + str_T(self.T)
         return val
 
-
-class PD2(BasicElement):
+class PD2(Element):
     def __init__(self, omega=1, D=1, V=1, dB=False):
         """
         The basic element PT2 (allowance of order 2).
         V may be given in dB.
         """
         if D < 0:
-            print("Error: Attenuation must not be negative.")
+            print("Error: Damping must not be negative.")
             return
 
         if dB:
             V = lin(V)
 
         self.omega = omega
-        self.D = D
+        self.damping = D
         self.V = V
 
         def H(s):
@@ -566,7 +570,7 @@ class PD2(BasicElement):
 
         def h(t):
             """
-            The impulse response h(t) of a PT2 at different attenuations.
+            The impulse response h(t) of a PT2 at different dampings.
             """
             t = np.asarray(t, dtype=np.float64)
             val = V * delta(t)
@@ -575,7 +579,7 @@ class PD2(BasicElement):
 
         def w(t):
             """
-            The step response w(t) of a PT2 at different attenuations.
+            The step response w(t) of a PT2 at different dampings.
             """
             t = np.asarray(t, dtype=np.float64)
             val = V * (2 * D / omega * delta(t) + step(t))
@@ -598,60 +602,265 @@ class PD2(BasicElement):
 
         self.poles = []
 
-        self.counter = H
-        self.denominator = 1
+        self.C = self
+        self.D = P()
 
     def __str__(self):
         val = "Allowance PD2 of order 2"
         val += " with " + str_V(self.V)
         val += " and " + str_omega(self.omega)
-        val += " and " + str_V(self.D, dB=False, text="D")
+        val += " and " + str_V(self.damping, dB=False, text="D")
         return val
 
 
-# Composite transfer functions
+# Composite elements
 
-def PROD(functions):
-    """
-    Returns the product of the given transfer functions
-    as a new transfer function.
-    """
-    def F(s, g=[]):
-        s = np.asarray(s, dtype=np.complex64)
-        g = np.asarray(g, dtype=np.float64)
-        prod = np.ones(s.size, dtype=np.complex64)
-        imp_res = np.zeros(s.size, dtype=np.float64)
-        imp_res[0] = 1
-        for F in functions:
-            prod *= F(s, g=g)
+class NEG(Element): # ToDo
+    def __init__(self, element, base=False):
+        """
+        Negative of an element.
+        """
+        def H(s):
+            """
+            The transfer function H(s).
+            """
+            s = np.asarray(s, dtype=np.complex64)
+            val = -1 * element.H(s)
+            return val
+        self.H = H
 
-        return prod
-    return F
+        def h(t):
+            """
+            The impulse response h(t).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = -1 * element.h(t)
+            return val
+        self.h = h
 
+        def w(t):
+            """
+            The step response w(t).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = -1 * element.w(t)
+            return val
+        self.w = w
 
-def SUM(functions):
-    """
-    Returns the sum of the given transfer functions
-    as a new transfer function.
-    """
-    def F(s, g=[]):
-        s = np.asarray(s, dtype=np.complex64)
-        sum = np.zeros(s.shape, dtype=np.complex64)
-        for F in functions:
-            sum += F(s, g=[])
-        return sum
-    return F
+        self.roots = element.roots
+        self.poles = element.poles
 
+        if base:
+            self.C = self
+        else:
+        self.C =
+        self.D = None
 
-def FEEDBACK_LOOP(F1, F2):
-    """
-    Returns the transfer function of the feedback loop
-    F(s, g=[]) = F1 / (1 + F1 * F2)
-    """
-    def F(s, g=[]):
-        s = np.asarray(s, dtype=np.complex64)
-        return F1(s) / (1 + F1(s) * F2(s))
-    return F
+    def __str__(self):
+        val = "Element"
+        return val
+
+class PROD(Element):
+    def __init__(self, elements, base_c=False, base_d=False):
+        """
+        The composite element PROD.
+        It linkes the given elements in seriell.
+        The recursion of finding the counter and denominator
+        is resolved by base_c and base_d.
+        """
+        self.elements = elements
+
+        def H(s):
+            """
+            The transfer function H(s) = PROD(elements.H).
+            """
+            s = np.asarray(s, dtype=np.complex64)
+            val = np.ones(s.size, dtype=np.complex64)
+            for e in elements:
+                val *= e.H(s)
+            return val
+        self.H = H
+
+        def h(t):
+            """
+            The impulse response h(t) = CONV(elements.h).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = np.delta(t)
+            for e in elements:
+                val = np.convolve(val, e.h(t), 'same')
+            return val
+        self.h = h
+
+        def w(t):
+            """
+            The step response w(t) = INT(h(t)).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = integrate(h(t), t)
+            return val
+        self.w = w
+
+        self.roots = []
+        self.poles = []
+        for e in elements:
+            self.roots += e.roots
+            self.poles += e.poles
+
+        self.C = None
+        if base_c:
+            self.C = self
+        else:
+            counter = []
+            for e in elements:
+                counter.append(e.C)
+            self.C = PROD(counter, base_c=True)
+
+        self.D = None
+        if base_d:
+            self.D = self
+        else:
+            denominator = []
+            for e in elements:
+                denominator.append(e.D)
+            self.D = PROD(denominator, base_d=True)
+
+    def __str__(self):
+        val = ""
+        for e in self.elements:
+            val += str(e) + "\n"
+        return val
+
+class SUM(Element):
+    def __init__(self, elements, base=False):
+        """
+        The composite element SUM.
+        It linkes the given elements in parallel.
+        The recursion of finding the counter is resolved by base.
+        """
+        self.elements = elements
+
+        def H(s):
+            """
+            The transfer function H(s) = PROD(elements.H).
+            """
+            s = np.asarray(s, dtype=np.complex64)
+            val = np.zeros(s.size, dtype=np.complex64)
+            for e in elements:
+                val += e.H(s)
+            return val
+        self.H = H
+
+        def h(t):
+            """
+            The impulse response h(t).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = np.zeros(t)
+            for e in elements:
+                val += e.h(t)
+            return val
+        self.h = h
+
+        def w(t):
+            """
+            The step response w(t).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = integrate(h(t), t)
+            return val
+        self.w = w
+
+        self.roots = None
+        self.poles = []
+        for e in elements:
+            self.poles += e.poles
+
+        self.C = None
+        if base:
+            self.C = self
+        else:
+            counter = []
+            for i in range(len(elements)):
+                prod = [elements[i].C]
+                for j in range(len(elements)):
+                    if j != i:
+                        prod.append(elements[j].D)
+                counter.append(PROD(prod, base_c=True))
+            self.C = SUM(counter, base=True)
+
+        denominator = []
+        for e in elements:
+            denominator.append(e.D)
+        self.D = PROD(denominator, base_c=True)
+
+    def __str__(self):
+        val = ""
+        for e in self.elements:
+            val += str(e) + "\n"
+        return val
+
+class FEEDBACK(Element): # ToDo
+    def __init__(self, feed, back):
+        """
+        The composite element FEEDBACK.
+        The given feed element goes forward,
+        the given back element loops back.
+        """
+        loop = PROD([feed, back])
+        self.FEED = feed
+        self.BACK = back
+        self.LOOP = loop
+
+        def H(s):
+            """
+            The transfer function H(s) = feed / (1 + feed * back).
+            """
+            s = np.asarray(s, dtype=np.complex64)
+            val = feed.H(s) / (1 + loop.H(s))
+            return val
+        self.H = H
+
+        def h(t): # ToDo
+            """
+            The impulse response h(t).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = None
+            return val
+        self.h = h
+
+        def w(t): # ToDo
+            """
+            The step response w(t).
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = None
+            return val
+        self.w = w
+
+        # ToDo
+        self.roots = None
+        self.poles = []
+        for e in elements:
+            self.poles += e.poles
+
+        # ToDo
+        self.C = None
+
+        def D(s):
+            s = np.asarray(s, dtype=np.complex64)
+            val = np.ones(s.size, dtype=np.complex64)
+            for e in elements:
+                val *= e.D(s)
+            return val
+        self.D = D
+
+    def __str__(self):
+        val = ""
+        for e in self.elements:
+            val += str(e) + "\n"
+        return val
 
 
 # Evaluate abs and phase of complex values in dB and degrees
