@@ -46,18 +46,19 @@ def unify(val):
 
 # String representations
 
-def str_V(V, lin=True, dB=True, prefix=True):
+def str_V(V, lin=True, dB=True, prefix=False, text="V"):
     """
     Convert V into a string representation.
     Choose if you want the linear or dB value.
     Choose if V shall get its metric prefix.
+    The displayed name can be specified in text.
     """
     if prefix:
         V, pre = unify(V)
     else:
         pre = ""
 
-    val = "V"
+    val = text
 
     if lin:
         val += " = " + str(V) + pre
@@ -67,31 +68,51 @@ def str_V(V, lin=True, dB=True, prefix=True):
 
     return val
 
-def str_T(T, prefix=True):
+def str_T(T, prefix=True, text="T"):
     """
     Convert T into a string representation.
     Choose if T shall get its metric prefix.
+    The displayed name can be specified in text.
     """
     if prefix:
         T, pre = unify(T)
     else:
         pre = ""
 
-    val = "T = " + str(T) + pre + "s"
+    val = text
+    val += " = " + str(T) + pre + "s"
 
     return val
 
-def str_omega(omega, prefix=True):
+def str_omega(omega, prefix=True, text="omega"):
     """
     Convert omega into a string representation.
     Choose if omega shall get its metric prefix.
+    The displayed name can be specified in text.
     """
     if prefix:
         omega, pre = unify(omega)
     else:
         pre = ""
 
-    val = "omega = " + str(omega) + pre + "/s"
+    val = text
+    val += " = " + str(omega) + pre + "/s"
+
+    return val
+
+def str_f(f, prefix=True, text="f"):
+    """
+    Convert f into a string representation.
+    Choose if f shall get its metric prefix.
+    The displayed name can be specified in text.
+    """
+    if prefix:
+        omega, pre = unify(omega)
+    else:
+        pre = ""
+
+    val = text
+    val += " = " + str(omega) + pre + "Hz"
 
     return val
 
@@ -218,9 +239,9 @@ class P(BasicElement):
         self.counter = V
         self.denominator = 1
 
-    def __str__(self, lin=True, dB=True):
-        val = "P"
-        val += " with " + str_V(V, lin=lin, dB=dB)
+    def __str__(self):
+        val = "Gain P"
+        val += " with " + str_V(self.V)
         return val
 
 
@@ -265,8 +286,8 @@ class I(BasicElement):
         self.denominator = D(T).H
 
     def __str__(self):
-        val = "I"
-        val += " with " + str_T(T)
+        val = "Integrator I"
+        val += " with " + str_T(self.T)
         return val
 
 
@@ -312,8 +333,8 @@ class D(BasicElement):
         self.denominator = 1
 
     def __str__(self):
-        val = "D"
-        val += " with " + str_T(T)
+        val = "Differentiator D"
+        val += " with " + str_T(self.T)
         return val
 
 
@@ -362,10 +383,10 @@ class PT1(BasicElement):
         self.counter = V
         self.denominator = PD1(T=T, V=V, dB=dB).H
 
-    def __str__(self, lin=True, dB=True):
-        val = "PT1"
-        val += " with " + str_V(V, lin=lin, dB=dB)
-        val += " and " + str_T(T)
+    def __str__(self):
+        val = "Low pass PT1 of order 1"
+        val += " with " + str_V(self.V)
+        val += " and " + str_T(self.T)
         return val
 
 
@@ -373,6 +394,7 @@ class PT2(BasicElement):
     def __init__(self, omega=1, D=1, V=1, dB=False):
         """
         The basic element PT2 (low pass of order 2).
+        V may be given in dB.
         """
         if D < 0:
             print("Error: Attenuation must not be negative.")
@@ -441,7 +463,7 @@ class PT2(BasicElement):
         self.roots = []
 
         if D == 0:
-            self.poles = [0 + 0j]
+            self.poles = [0 + 1j * omega, 0 - 1j * omega]
         elif D > 0 and D < 1:
             real = -1 * omega * D
             imag = 1j * omega * np.sqrt(1 - D ** 2)
@@ -457,21 +479,24 @@ class PT2(BasicElement):
         self.denominator = PD2(omega=omega, D=D, V=V, dB=dB).H
 
     def __str__(self):
-        val = "PT2"
-        val += " with V = " + str(self.V) + " = " + str(dB(self.V)) + "dB"
-        val += " and omega = " + str(self.omega) + "/s"
-        val += " and D = " + str(self.D)
+        val = "Low pass PT2 of order 2"
+        val += " with " + str_V(self.V)
+        val += " and " + str_omega(self.omega)
+        val += " and " + str_V(self.D, dB=False, text="D")
         return val
 
 
 class PD1(BasicElement):
     def __init__(T=1, V=1, dB=False):
         """
-        The basic element PD1.
+        The basic element PD1 (allowance of order 1).
         V may be given in dB.
         """
         if dB:
             V = lin(V)
+
+        self.T = T
+        self.V = V
 
         def H(s):
             """
@@ -496,7 +521,7 @@ class PD1(BasicElement):
             The step response w(t).
             """
             t = np.asarray(t, dtype=np.float64)
-            val = None
+            val = V * (T * delta(t) + step(t))
             return val
         self.w = w
 
@@ -506,7 +531,82 @@ class PD1(BasicElement):
         self.counter = H
         self.denominator = 1
 
+    def __str__(self):
+        val = "Allowance PD1 of order 1"
+        val += " with " + str_V(self.V)
+        val += " and " + str_T(self.T)
+        return val
 
+
+class PD2(BasicElement):
+    def __init__(self, omega=1, D=1, V=1, dB=False):
+        """
+        The basic element PT2 (allowance of order 2).
+        V may be given in dB.
+        """
+        if D < 0:
+            print("Error: Attenuation must not be negative.")
+            return
+
+        if dB:
+            V = lin(V)
+
+        self.omega = omega
+        self.D = D
+        self.V = V
+
+        def H(s):
+            """
+            The transfer function H(s) = V / (s/omega ** 2 + 2D/omega * s + 1).
+            """
+            s = np.asarray(s, dtype=np.complex64)
+            val = V * (s / omega ** 2 + 2 * D / omega * s + 1)
+            return val
+        self.H = H
+
+        def h(t):
+            """
+            The impulse response h(t) of a PT2 at different attenuations.
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = V * delta(t)
+            return val
+        self.h = h
+
+        def w(t):
+            """
+            The step response w(t) of a PT2 at different attenuations.
+            """
+            t = np.asarray(t, dtype=np.float64)
+            val = V * (2 * D / omega * delta(t) + step(t))
+            return val
+        self.w = w
+
+
+        if D == 0:
+            self.roots = [0 + 1j * omega, 0 - 1j * omega]
+        elif D > 0 and D < 1:
+            real = -1 * omega * D
+            imag = 1j * omega * np.sqrt(1 - D ** 2)
+            self.roots = [real + imag, real - imag]
+        elif D == 1:
+            self.roots = [-1 * omega]
+        else:
+            p1 = -1 * omega * D
+            p2 = omega * np.sqrt(D ** 1 - 1)
+            self.roots = [p1 - p2, p1 + p2]
+
+        self.poles = []
+
+        self.counter = H
+        self.denominator = 1
+
+    def __str__(self):
+        val = "Allowance PD2 of order 2"
+        val += " with " + str_V(self.V)
+        val += " and " + str_omega(self.omega)
+        val += " and " + str_V(self.D, dB=False, text="D")
+        return val
 
 
 # Composite transfer functions
