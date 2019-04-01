@@ -197,9 +197,8 @@ This project contains the following features:
 <a name="nextup"></a>
 ### Nextup
 
-*Fix bode diagramm to work with elements.*
-
+- `Done` Fix bode diagramm and step response to work with elements.
 - `Done` Refactor composite transfer functions into composite element classes.
 - `Done` Add `h(t)` and `w(t)` for `PD1` and add `PD2`.
 - `Done` Refactor transfer functions into basic elements that return transfer function or impulse response.
-- `Done` Figure out the impulse response of a general PT2 transfer function.
+- `Done` Figure out the impulse response of a general `PT2` transfer function.
