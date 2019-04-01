@@ -197,6 +197,8 @@ This project contains the following features:
 <a name="nextup"></a>
 ### Nextup
 
+*Test elements and diagramms.*
+
 - `Done` Fix bode diagramm and step response to work with elements.
 - `Done` Refactor composite transfer functions into composite element classes.
 - `Done` Add `h(t)` and `w(t)` for `PD1` and add `PD2`.
