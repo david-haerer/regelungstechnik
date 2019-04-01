@@ -7,17 +7,38 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as col
 
 
-# Matplotlib settings
+# Plotting
 
 plt.rcParams["axes.labelsize"] = 14
 plt.rcParams["xtick.labelsize"] = 12
 plt.rcParams["ytick.labelsize"] = 12
 plt.rcParams["text.usetex"] = True
 
+def hue_intervall(num, saturation, value, start=0.0):
+    """
+    Returns a list of rgb triples visually evenly spaced in regard of hues;
+    start markes first color hue in degrees.
+    """
+    # Matplotlib uses hues in range [0,1].
+    start /= 360.0
 
-# Metric prefixes
+    hues = np.arange(0.0, 1.0, 1.0 / num)
+    # The hues in the hsv color space are visually not evenly distributed.
+    # To compensate this effect, we calculate hue**1.5.
+    for i in range(len(hues)):
+        hues[i] = math.pow(hues[i], 1.5)
 
-def unify(val):
+    colors = []
+    for hue in hues:
+        hsv = ((hue + start) % 1.0, saturation, value)
+        colors.append(col.hsv_to_rgb(hsv))
+
+    return colors
+
+
+# Conversions
+
+def unify(val, threshold=0.1):
     prefix = ["",
               "k", "M", "G", "T", "P", "E", "Z", "Y",
               "y", "z", "a", "f", "p", "n", "µ", "m"]
@@ -28,13 +49,13 @@ def unify(val):
 
     # Multiple
     if val.max() > 1:
-        while val.max() >= 1000:
+        while val.max() >= threshold * 1e3:
             val *= 1e-3
             i += 1
 
     # Fraction
     elif val.max() < 1:
-        while val.max() < 1:
+        while val.max() < threshold:
             val *= 1e3
             i -= 1
 
@@ -42,6 +63,35 @@ def unify(val):
         val = float(val)
 
     return val, prefix[i]
+
+def dB(val):
+    """
+    Returns the absolute value in dB of the given values.
+    """
+    return 20 * np.log10(np.abs(val))
+
+def lin(val):
+    """
+    Returns the linear values of the given dB values.
+    """
+    return 10 ** (val / 20)
+
+def phase(val, min, max):
+    """
+    Returns the phase value in degrees in the range between
+    v_min and v_max of the given values.
+    """
+    phi = np.angle(val, deg=True)
+    # Move phi down
+    while (phi > max).any():
+        phi[phi > max] -= 360
+    # Move phi up
+    while (phi < min).any():
+        phi[phi < min] += 360
+    # Move phi down as far as possible
+    while (phi - 360 > min).any():
+        phi[phi - 360 > min] -= 360
+    return phi
 
 
 # String representations
@@ -135,15 +185,12 @@ def ramp(t):
     return val
 
 
-# Integration
+# Transformations
 
 def integrate(y, t):
     delta = t[1] - t[0]
     val = delta * y.cumsum()
     return val
-
-
-# Fourier transform
 
 def fft(y):
     l = y.size // N + 1
@@ -191,12 +238,6 @@ class Element(object):
             return val
         self.w = w
 
-        self.roots = None
-        self.poles = None
-
-        self.C = None
-        self.D = None
-
     def __str__(self):
         val = "Element"
         return val
@@ -243,12 +284,6 @@ class P(Element):
             return val
         self.w = w
 
-        self.roots = []
-        self.poles = []
-
-        self.C = self
-        self.D = P()
-
     def __str__(self):
         val = "Gain P"
         val += " with " + str_V(self.V)
@@ -287,12 +322,6 @@ class I(Element):
             val = 1 / T * t
             return val
         self.w = w
-
-        self.roots = []
-        self.poles = [0 + 0j]
-
-        self.C = P()
-        self.D = D(T)
 
     def __str__(self):
         val = "Integrator I"
@@ -333,12 +362,6 @@ class D(Element):
             val[0] = np.inf
             return val
         self.w = w
-
-        self.roots = [0 + 0j]
-        self.poles = []
-
-        self.C = self
-        self.D = P()
 
     def __str__(self):
         val = "Differentiator D"
@@ -384,12 +407,6 @@ class PT1(Element):
             return val
         self.w = w
 
-        self.roots = []
-        self.poles = [-1 / T]
-
-        self.C = P(V=V)
-        self.D = PD1(T=T)
-
     def __str__(self):
         val = "Low pass PT1 of order 1"
         val += " with " + str_V(self.V)
@@ -410,7 +427,7 @@ class PT2(Element):
             V = lin(V)
 
         self.omega = omega
-        self.damping = D
+        self.D = D
         self.V = V
 
         def H(s):
@@ -466,29 +483,11 @@ class PT2(Element):
             return val
         self.w = w
 
-        self.roots = []
-
-        if D == 0:
-            self.poles = [0 + 1j * omega, 0 - 1j * omega]
-        elif D > 0 and D < 1:
-            real = -1 * omega * D
-            imag = 1j * omega * np.sqrt(1 - D ** 2)
-            self.poles = [real + imag, real - imag]
-        elif D == 1:
-            self.poles = [-1 * omega]
-        else:
-            p1 = -1 * omega * D
-            p2 = omega * np.sqrt(D ** 1 - 1)
-            self.poles = [p1 - p2, p1 + p2]
-
-        self.C = P(V=V)
-        self.D = PD2(omega=omega, D=D)
-
     def __str__(self):
         val = "Low pass PT2 of order 2"
         val += " with " + str_V(self.V)
         val += " and " + str_omega(self.omega)
-        val += " and " + str_V(self.damping, dB=False, text="D")
+        val += " and " + str_V(self.D, dB=False, text="D")
         return val
 
 class PD1(Element):
@@ -530,12 +529,6 @@ class PD1(Element):
             return val
         self.w = w
 
-        self.roots = [-1 / T]
-        self.poles = []
-
-        self.C = self
-        self.D = P()
-
     def __str__(self):
         val = "Allowance PD1 of order 1"
         val += " with " + str_V(self.V)
@@ -556,7 +549,7 @@ class PD2(Element):
             V = lin(V)
 
         self.omega = omega
-        self.damping = D
+        self.D = D
         self.V = V
 
         def H(s):
@@ -586,87 +579,21 @@ class PD2(Element):
             return val
         self.w = w
 
-
-        if D == 0:
-            self.roots = [0 + 1j * omega, 0 - 1j * omega]
-        elif D > 0 and D < 1:
-            real = -1 * omega * D
-            imag = 1j * omega * np.sqrt(1 - D ** 2)
-            self.roots = [real + imag, real - imag]
-        elif D == 1:
-            self.roots = [-1 * omega]
-        else:
-            p1 = -1 * omega * D
-            p2 = omega * np.sqrt(D ** 1 - 1)
-            self.roots = [p1 - p2, p1 + p2]
-
-        self.poles = []
-
-        self.C = self
-        self.D = P()
-
     def __str__(self):
         val = "Allowance PD2 of order 2"
         val += " with " + str_V(self.V)
         val += " and " + str_omega(self.omega)
-        val += " and " + str_V(self.damping, dB=False, text="D")
+        val += " and " + str_V(self.D, dB=False, text="D")
         return val
 
 
 # Composite elements
 
-class NEG(Element): # ToDo
-    def __init__(self, element, base=False):
-        """
-        Negative of an element.
-        """
-        def H(s):
-            """
-            The transfer function H(s).
-            """
-            s = np.asarray(s, dtype=np.complex64)
-            val = -1 * element.H(s)
-            return val
-        self.H = H
-
-        def h(t):
-            """
-            The impulse response h(t).
-            """
-            t = np.asarray(t, dtype=np.float64)
-            val = -1 * element.h(t)
-            return val
-        self.h = h
-
-        def w(t):
-            """
-            The step response w(t).
-            """
-            t = np.asarray(t, dtype=np.float64)
-            val = -1 * element.w(t)
-            return val
-        self.w = w
-
-        self.roots = element.roots
-        self.poles = element.poles
-
-        if base:
-            self.C = self
-        else:
-        self.C =
-        self.D = None
-
-    def __str__(self):
-        val = "Element"
-        return val
-
 class PROD(Element):
-    def __init__(self, elements, base_c=False, base_d=False):
+    def __init__(self, elements):
         """
         The composite element PROD.
         It linkes the given elements in seriell.
-        The recursion of finding the counter and denominator
-        is resolved by base_c and base_d.
         """
         self.elements = elements
 
@@ -701,30 +628,6 @@ class PROD(Element):
             return val
         self.w = w
 
-        self.roots = []
-        self.poles = []
-        for e in elements:
-            self.roots += e.roots
-            self.poles += e.poles
-
-        self.C = None
-        if base_c:
-            self.C = self
-        else:
-            counter = []
-            for e in elements:
-                counter.append(e.C)
-            self.C = PROD(counter, base_c=True)
-
-        self.D = None
-        if base_d:
-            self.D = self
-        else:
-            denominator = []
-            for e in elements:
-                denominator.append(e.D)
-            self.D = PROD(denominator, base_d=True)
-
     def __str__(self):
         val = ""
         for e in self.elements:
@@ -732,11 +635,10 @@ class PROD(Element):
         return val
 
 class SUM(Element):
-    def __init__(self, elements, base=False):
+    def __init__(self, elements):
         """
         The composite element SUM.
         It linkes the given elements in parallel.
-        The recursion of finding the counter is resolved by base.
         """
         self.elements = elements
 
@@ -771,154 +673,11 @@ class SUM(Element):
             return val
         self.w = w
 
-        self.roots = None
-        self.poles = []
-        for e in elements:
-            self.poles += e.poles
-
-        self.C = None
-        if base:
-            self.C = self
-        else:
-            counter = []
-            for i in range(len(elements)):
-                prod = [elements[i].C]
-                for j in range(len(elements)):
-                    if j != i:
-                        prod.append(elements[j].D)
-                counter.append(PROD(prod, base_c=True))
-            self.C = SUM(counter, base=True)
-
-        denominator = []
-        for e in elements:
-            denominator.append(e.D)
-        self.D = PROD(denominator, base_c=True)
-
     def __str__(self):
         val = ""
         for e in self.elements:
             val += str(e) + "\n"
         return val
-
-class FEEDBACK(Element): # ToDo
-    def __init__(self, feed, back):
-        """
-        The composite element FEEDBACK.
-        The given feed element goes forward,
-        the given back element loops back.
-        """
-        loop = PROD([feed, back])
-        self.FEED = feed
-        self.BACK = back
-        self.LOOP = loop
-
-        def H(s):
-            """
-            The transfer function H(s) = feed / (1 + feed * back).
-            """
-            s = np.asarray(s, dtype=np.complex64)
-            val = feed.H(s) / (1 + loop.H(s))
-            return val
-        self.H = H
-
-        def h(t): # ToDo
-            """
-            The impulse response h(t).
-            """
-            t = np.asarray(t, dtype=np.float64)
-            val = None
-            return val
-        self.h = h
-
-        def w(t): # ToDo
-            """
-            The step response w(t).
-            """
-            t = np.asarray(t, dtype=np.float64)
-            val = None
-            return val
-        self.w = w
-
-        # ToDo
-        self.roots = None
-        self.poles = []
-        for e in elements:
-            self.poles += e.poles
-
-        # ToDo
-        self.C = None
-
-        def D(s):
-            s = np.asarray(s, dtype=np.complex64)
-            val = np.ones(s.size, dtype=np.complex64)
-            for e in elements:
-                val *= e.D(s)
-            return val
-        self.D = D
-
-    def __str__(self):
-        val = ""
-        for e in self.elements:
-            val += str(e) + "\n"
-        return val
-
-
-# Evaluate abs and phase of complex values in dB and degrees
-
-def dB(val):
-    """
-    Returns the absolute value in dB of the given values.
-    """
-    return 20 * np.log10(np.abs(val))
-
-
-def lin(val):
-    """
-    Returns the linear values of the given dB values.
-    """
-    return 10 ** (val / 20)
-
-
-def phase(val, min, max):
-    """
-    Returns the phase value in degrees in the range between
-    v_min and v_max of the given values.
-    """
-    phi = np.angle(val, deg=True)
-    # Move phi down
-    while (phi > max).any():
-        phi[phi > max] -= 360
-    # Move phi up
-    while (phi < min).any():
-        phi[phi < min] += 360
-    # Move phi down as far as possible
-    while (phi - 360 > min).any():
-        phi[phi - 360 > min] -= 360
-    return phi
-
-
-# Hue color intervall
-
-def hue_intervall(num, saturation, value, start=0.0):
-    """
-    Returns a list of rgb triples visually evenly spaced in regard of hues;
-    start markes first color hue in degrees.
-    """
-    # Matplotlib uses hues in range [0,1].
-    start /= 360.0
-
-    hues = np.arange(0.0, 1.0, 1.0 / num)
-    # The hues in the hsv color space are visually not evenly distributed.
-    # To compensate this effect, we calculate hue**1.5.
-    for i in range(len(hues)):
-        hues[i] = math.pow(hues[i], 1.5)
-
-    colors = []
-    for hue in hues:
-        hsv = ((hue + start) % 1.0, saturation, value)
-        colors.append(col.hsv_to_rgb(hsv))
-
-    return colors
 
 
 # Bode diagramm
