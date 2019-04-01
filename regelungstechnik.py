@@ -8,78 +8,33 @@ import matplotlib.colors as col
 from abc import ABC, abstractmethod
 
 
-# Transformations
+# Plotting
 
-def unify(val, threshold=0.1):
-    prefix = ["",
-              "k", "M", "G", "T", "P", "E", "Z", "Y",
-              "y", "z", "a", "f", "p", "n", "µ", "m"]
+plt.rcParams["axes.labelsize"] = 14
+plt.rcParams["xtick.labelsize"] = 12
+plt.rcParams["ytick.labelsize"] = 12
+plt.rcParams["text.usetex"] = True
 
-    i = 0
-
-    val = np.asarray(val, dtype=np.float64)
-
-    # Multiple
-    if val.max() > 1:
-        while val.max() >= threshold * 1e3:
-            val *= 1e-3
-            i += 1
-
-    # Fraction
-    elif val.max() < 1:
-        while val.max() < threshold:
-            val *= 1e3
-            i -= 1
-
-    if val.size == 1:
-        val = float(val)
-
-    return val, prefix[i]
-
-def lin(val):
+def colorspace(num, saturation=1, value=0.8, start=0.0):
     """
-    Returns the linear values of the given dB values.
+    Returns a list of rgb triples visually evenly spaced in regard of hues;
+    start markes first color hue in degrees.
     """
-    return 10 ** (val / 20)
+    # Matplotlib uses hues in range [0,1].
+    start /= 360.0
 
-def dB(val):
-    """
-    Returns the absolute value in dB of the given values.
-    """
-    return 20 * np.log10(np.abs(val))
+    hues = np.arange(0.0, 1.0, 1.0 / num)
 
-def angle(val, min, max):
-    """
-    Returns the phase value in degrees in the range between
-    v_min and v_max of the given values.
-    """
-    phi = np.angle(val, deg=True)
-    # Move phi down
-    while (phi > max).any():
-        phi[phi > max] -= 360
-    # Move phi up
-    while (phi < min).any():
-        phi[phi < min] += 360
-    # Move phi down as far as possible
-    while (phi - 360 > min).any():
-        phi[phi - 360 > min] -= 360
-    return phi
+    # The hues in the hsv color space are visually not evenly distributed.
+    # To compensate this effect, we calculate hue**1.5.
+    hues = hues ** 1.5
 
-def integrate(y, t):
-    delta = t[1] - t[0]
-    val = delta * y.cumsum()
-    return val
+    colors = []
+    for hue in hues:
+        hsv = ((hue + start) % 1.0, saturation, value)
+        colors.append(col.hsv_to_rgb(hsv))
 
-def fft(y):
-    l = y.size // N + 1
-    val = np.fft.fft(y)
-    val[l:] = 0
-    return val
-
-def ifft(Y):
-    l = Y.size // N + 1
-    val = np.fft.irfft(Y[:l])
-    return val
+    return colors
 
 
 # String representations
@@ -170,6 +125,80 @@ def step(t):
 def ramp(t):
     val = np.copy(t)
     val[t < 0] = 0
+    return val
+
+
+# Transformations
+
+def unify(val, threshold=0.1):
+    prefix = ["",
+              "k", "M", "G", "T", "P", "E", "Z", "Y",
+              "y", "z", "a", "f", "p", "n", "µ", "m"]
+
+    i = 0
+
+    val = np.asarray(val, dtype=np.float64)
+
+    # Multiple
+    if val.max() > 1:
+        while val.max() >= threshold * 1e3:
+            val *= 1e-3
+            i += 1
+
+    # Fraction
+    elif val.max() < 1:
+        while val.max() < threshold:
+            val *= 1e3
+            i -= 1
+
+    if val.size == 1:
+        val = float(val)
+
+    return val, prefix[i]
+
+def lin(val):
+    """
+    Returns the linear values of the given dB values.
+    """
+    return 10 ** (val / 20)
+
+def dB(val):
+    """
+    Returns the absolute value in dB of the given values.
+    """
+    return 20 * np.log10(np.abs(val))
+
+def angle(val, min, max):
+    """
+    Returns the phase value in degrees in the range between
+    v_min and v_max of the given values.
+    """
+    phi = np.angle(val, deg=True)
+    # Move phi down
+    while (phi > max).any():
+        phi[phi > max] -= 360
+    # Move phi up
+    while (phi < min).any():
+        phi[phi < min] += 360
+    # Move phi down as far as possible
+    while (phi - 360 > min).any():
+        phi[phi - 360 > min] -= 360
+    return phi
+
+def integrate(y, t):
+    delta = t[1] - t[0]
+    val = delta * y.cumsum()
+    return val
+
+def fft(y):
+    l = y.size // N + 1
+    val = np.fft.fft(y)
+    val[l:] = 0
+    return val
+
+def ifft(Y):
+    l = Y.size // N + 1
+    val = np.fft.irfft(Y[:l])
     return val
 
 
@@ -593,32 +622,6 @@ class SUM(Element):
 
 # Diagramms
 
-plt.rcParams["axes.labelsize"] = 14
-plt.rcParams["xtick.labelsize"] = 12
-plt.rcParams["ytick.labelsize"] = 12
-plt.rcParams["text.usetex"] = True
-
-def hue_intervall(num, saturation, value, start=0.0):
-    """
-    Returns a list of rgb triples visually evenly spaced in regard of hues;
-    start markes first color hue in degrees.
-    """
-    # Matplotlib uses hues in range [0,1].
-    start /= 360.0
-
-    hues = np.arange(0.0, 1.0, 1.0 / num)
-    # The hues in the hsv color space are visually not evenly distributed.
-    # To compensate this effect, we calculate hue**1.5.
-    for i in range(len(hues)):
-        hues[i] = math.pow(hues[i], 1.5)
-
-    colors = []
-    for hue in hues:
-        hsv = ((hue + start) % 1.0, saturation, value)
-        colors.append(col.hsv_to_rgb(hsv))
-
-    return colors
-
 class Diagramm(ABC):
     """
     Abstract base class for bode, impulse- and step-response diagramm.
@@ -637,7 +640,7 @@ class Diagramm(ABC):
             return None
 
         self.labels = labels
-        self.colors = hue_intervall(len(elements), 1, 0.8)
+        self.colors = colorspace(len(elements))
         self.lang = lang
 
     @abstractmethod
