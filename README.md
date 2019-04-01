@@ -184,8 +184,8 @@ The goal is to relabel `ToDo` items into `Done` while having as few items as pos
 
 This project contains the following features:
 
-- `Limbo` Create and evaluate transfer functions
-- `Limbo` Evaluate the impulse response of a transfer function
+- `Done` Create and evaluate transfer functions
+- `Done` Evaluate the impulse response of a transfer function
 - `Limbo` Plot bode diagramms
 - `Limbo` Plot step responses
 - `ToDo` Add a license to the project.
@@ -197,16 +197,9 @@ This project contains the following features:
 <a name="nextup"></a>
 ### Nextup
 
-*Refactor composite transfer functions into composite element classes*
+*Fix bode diagramm to work with elements.*
 
-- `Done` Add h(t) and w(t) for PD1 and add PD2.
+- `Done` Refactor composite transfer functions into composite element classes.
+- `Done` Add `h(t)` and `w(t)` for `PD1` and add `PD2`.
 - `Done` Refactor transfer functions into basic elements that return transfer function or impulse response.
 - `Done` Figure out the impulse response of a general PT2 transfer function.
-
-
-<a name="missing"></a>
-### Missing
-
-The following features are missing due to technical difficulty. Optimistically they are `ToDo`or in `Limbo` but don't expect them anytime soon.
-
-- In `SUM(elements)` the attribute `roots` is `None`.
