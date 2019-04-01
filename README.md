@@ -14,9 +14,9 @@ This python module is still under development and may change at any time without
 2. [Naming](#names)
     1. [Labels](#labels)
     2. [Quantities and Units](#units)
-    3. [Sequences in the Time Domain](#time)
-    4. [Sequences in the Frequency Domain](#frequency)
-    5. [Basic Elements](#basic_elements)
+    3. [Time Domain](#time)
+    4. [Frequency Domain](#frequency)
+    5. [Elements](#elements)
 3. [Example](#example)
     1. [Creating Transfer Functions](#example1)
     2. [Creating Bode-Diagrams](#example2)
@@ -58,7 +58,7 @@ In this project, the following naming is used.
 
 
 <a name="time"></a>
-### Sequences in the Time Domain
+### Time Domain
 
 For sequences in the time domain, lower case letters are used.
 
@@ -72,7 +72,7 @@ For sequences in the time domain, lower case letters are used.
 
 
 <a name="frequency"></a>
-### Sequences in the Frequency Domain
+### Frequency Domain
 
 For sequences in the frequency domain, upper case letters are used.
 
@@ -81,8 +81,8 @@ For sequences in the frequency domain, upper case letters are used.
 - Transfer function `H(t)`
 
 
-<a name="basic_elements"></a>
-### Basic Elements
+<a name="elements"></a>
+### Elements
 
 - Gain `P`
 - Integrator `I`
@@ -90,7 +90,6 @@ For sequences in the frequency domain, upper case letters are used.
 - Low pass `PT1`
 - Low pass `PT2`
 - Allowance `PD1`
-- Allowance `PD2`
 
 ---
 
