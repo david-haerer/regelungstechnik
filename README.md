@@ -1,4 +1,5 @@
 # Regelungstechnik
+---
 
 Create diagrams for control theory in python.
 
@@ -12,7 +13,6 @@ Currently only the frequency domain is usable (transfer function and bode diagra
 
 
 ## Contents
-
 ---
 
 1. [Getting Started](#getting_started)
@@ -33,7 +33,6 @@ Currently only the frequency domain is usable (transfer function and bode diagra
 
 <a name="getting_started"></a>
 ## Getting Started
-
 ---
 
 Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
@@ -41,7 +40,6 @@ Download `regelungstechnik.py` and `main.py`. The example code in `main.py` shou
 
 <a name="names"></a>
 ## Naming
-
 ---
 
 In this project, the following naming is used.
@@ -101,7 +99,6 @@ For sequences in the frequency domain, upper case letters are used.
 
 <a name="example"></a>
 ## Example
-
 ---
 
 
@@ -182,7 +179,6 @@ This Step-Response shows all the created transfer functions for comparison.
 
 <a name="roadmap"></a>
 ## Roadmap
-
 ---
 
 The goal is to relabel `ToDo` items into `Done` while having as few items as possible in `Limbo`.
