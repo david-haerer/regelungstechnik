@@ -188,6 +188,7 @@ This project contains the following features:
 - `Done` Evaluate the impulse response of a transfer function
 - `Done` Plot bode diagramms
 - `Limbo` Plot step responses
+- `ToDo` Add support for all platforms.
 - `ToDo` Add a license to the project.
 - `ToDo` Plot responses to arbitrary input functions
 - `ToDo` Website as GUI
