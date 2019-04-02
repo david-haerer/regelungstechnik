@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import math
 import numpy as np
+from scipy import signal
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
 from abc import ABC, abstractmethod
@@ -100,12 +100,12 @@ def str_f(f, prefix=True, text="f"):
     The displayed name can be specified in text.
     """
     if prefix:
-        omega, pre = unify(omega)
+        f, pre = unify(f)
     else:
         pre = ""
 
     val = text
-    val += " = " + str(omega) + pre + "Hz"
+    val += " = " + str(f) + pre + "Hz"
 
     return val
 
@@ -124,7 +124,15 @@ def step(t):
 
 def ramp(t):
     val = np.copy(t)
-    val[t < 0] = 0
+    val *= step(t)
+    return val
+
+def zero(t, dtype=np.float64):
+    val = np.zeros(t.size, dtype=dtype)
+    return val
+
+def one(t, dtype=np.float64):
+    val = np.ones(t.size, dtype=dtype)
     return val
 
 
@@ -186,18 +194,20 @@ def angle(val, min, max):
     return phi
 
 def integrate(y, t):
+    y = np.asarray(y, dtype=np.float64)
     delta = t[1] - t[0]
     val = delta * y.cumsum()
+    val = y.cumsum()
     return val
 
 def fft(y):
-    l = y.size // N + 1
+    l = y.size // 2 + 1
     val = np.fft.fft(y)
     val[l:] = 0
     return val
 
 def ifft(Y):
-    l = Y.size // N + 1
+    l = Y.size // 2 + 1
     val = np.fft.irfft(Y[:l])
     return val
 
@@ -206,21 +216,22 @@ def ifft(Y):
 
 class Element(ABC):
     @abstractmethod
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s).
         """
         pass
 
     @abstractmethod
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t).
         """
         pass
 
     @abstractmethod
-    def w(t):
+    def w(self, t):
+
         """
         The step response w(t).
         """
@@ -243,7 +254,7 @@ class P(Element):
 
         self.V = V
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = V.
         """
@@ -251,22 +262,22 @@ class P(Element):
         val = self.V * np.ones(shape=s.shape, dtype=np.complex64)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t) = [V, 0, ...]
         """
         t = np.asarray(t, dtype=np.float64)
         val = np.zeros(shape=t.shape, dtype=np.float64)
-        val[t = 0] = self.V
+        val[t == 0] = self.V
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t) = V
         """
         t = np.asarray(t, dtype=np.float64)
         val = self.V * np.ones(shape=t.shape, dtype=np.float64)
-        val[t < 0] = 0
+        val *= step(t)
         return val
 
     def __str__(self):
@@ -283,7 +294,7 @@ class I(Element):
 
         self.T = T
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = 1 / Ts.
         """
@@ -291,22 +302,22 @@ class I(Element):
         val = 1 / (self.T * s)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t) = V.
         """
         t = np.asarray(t, dtype=np.float64)
         val = 1 / self.T * np.ones(shape=t.shape, dtype=np.float64)
-        val[t < 0] = 0
+        val *= step(t)
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t) = 1 / T * t.
         """
         t = np.asarray(t, dtype=np.float64)
         val = 1 / self.T * t
-        val[t < 0] = 0
+        val *= step(t)
         return val
 
     def __str__(self):
@@ -323,15 +334,15 @@ class D(Element):
 
         self.T = T
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = T * s.
         """
         s = np.asarray(s, dtype=np.complex64)
-        val = T * s
+        val = self.T * s
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t) = 0.
         """
@@ -339,13 +350,13 @@ class D(Element):
         val = np.zeros(shape=t.shape, dtype=np.float64)
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t) = [1/T, 0, ...].
         """
         t = np.asarray(t, dtype=np.float64)
         val = np.zeros(shape=t.shape, dtype=np.float64)
-        val[t = 0] = 1 / self.T
+        val[t == 0] = 1 / self.T
         return val
 
     def __str__(self):
@@ -367,7 +378,7 @@ class PT1(Element):
         self.T = T
         self.V = V
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = V / (Ts + 1).
         """
@@ -375,22 +386,22 @@ class PT1(Element):
         val = self.V / (self.T * s + 1)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t).
         """
         t = np.asarray(t, dtype=np.float64)
         val = self.V / self.T * np.exp(-1 * t / self.T)
-        val[t < 0] = 0
+        val *= step(t)
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t).
         """
         t = np.asarray(t, dtype=np.float64)
         val = self.V * (1 - np.exp(-1 * t / self.T))
-        val[t < 0] = 0
+        val *= step(t)
         return val
 
     def __str__(self):
@@ -418,15 +429,18 @@ class PT2(Element):
         self.D = D
         self.V = V
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = V / (s/omega ** 2 + 2D/omega * s + 1).
         """
         s = np.asarray(s, dtype=np.complex64)
-        val = self.V / (s / self.omega ** 2 + 2 * self.D / self.omega * s + 1)
+        V = self.V
+        omega = self.omega
+        D = self.D
+        val = V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t) of a PT2 at different dampings.
         """
@@ -449,28 +463,32 @@ class PT2(Element):
             val = -1 * V * omega / (2 * D1)
             val *= np.exp(-1 * (D - D1) * omega * t)
 
-        val[t < 0] = 0
+        val *= step(t)
 
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t) of a PT2 at different dampings.
         """
         t = np.asarray(t, dtype=np.float64)
 
         V = self.V
+        print("V = " + str(V))
         omega = self.omega
+        print("omega = " + str(omega))
         D = self.D
+        print("D = " + str(D))
 
         if D == 0:
             val = V - V * np.cos(omega * t)
         elif D > 0 and D < 1:
-            theta = np.arccos(D)
             D1 = np.sqrt(1 - D ** 2)
-            val = -1 * V * np.exp(-1 * omega * t) / D1
-            val *= np.sin(D1 * omega * t + theta)
-            val += V
+            print("D1 = " + str(D1))
+            theta = np.arctan(-1 * D / D1)
+            print("theta = " + str(theta))
+
+            val = V * (1 + 1 / (2 * D1) * np.exp(-1 * D1 * omega * t) * np.cos(D1 * omega * t - np.pi - np.arctan(-1 * D / D1)))
         elif D == 1:
             val = V - V * (1 - omega * t) * np.exp(-1 * omega * t)
         else:
@@ -478,7 +496,7 @@ class PT2(Element):
             val = V / (2 * (D - D1) * D1)
             val *= np.exp(-1 * (D - D1) * omega * t)
 
-        val[t < 0] = 0
+        val *= step(t)
 
         return val
 
@@ -490,7 +508,7 @@ class PT2(Element):
         return val
 
 class PD1(Element):
-    def __init__(T=1, V=1, dB=False):
+    def __init__(self, T=1, V=1, dB=False):
         """
         The basic element PD1 (allowance of order 1).
         V may be given in dB.
@@ -503,7 +521,7 @@ class PD1(Element):
         self.T = T
         self.V = V
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = V * (Ts + 1).
         """
@@ -511,7 +529,7 @@ class PD1(Element):
         val = self.V * (self.T * s + 1)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t).
         """
@@ -519,7 +537,7 @@ class PD1(Element):
         val = self.V * delta(self.t)
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t).
         """
@@ -542,7 +560,7 @@ class PROD(Element):
         super().__init__()
         self.elements = elements
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = PROD(elements.H).
         """
@@ -552,17 +570,17 @@ class PROD(Element):
             val *= e.H(s)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t) = CONV(elements.h).
         """
         t = np.asarray(t, dtype=np.float64)
-        val = np.delta(t)
+        val = delta(t)
         for e in self.elements:
             val = np.convolve(val, e.h(t), 'same')
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t) = INT(h(t)).
         """
@@ -585,7 +603,7 @@ class SUM(Element):
         super().__init__()
         self.elements = elements
 
-    def H(s):
+    def H(self, s):
         """
         The transfer function H(s) = PROD(elements.H).
         """
@@ -595,7 +613,7 @@ class SUM(Element):
             val += e.H(s)
         return val
 
-    def h(t):
+    def h(self, t):
         """
         The impulse response h(t).
         """
@@ -605,7 +623,7 @@ class SUM(Element):
             val += e.h(t)
         return val
 
-    def w(t):
+    def w(self, t):
         """
         The step response w(t).
         """
@@ -622,49 +640,7 @@ class SUM(Element):
 
 # Diagramms
 
-class Diagramm(ABC):
-    """
-    Abstract base class for bode, impulse- and step-response diagramm.
-    """
-    def __init__(self, elements, labels, lang="DE"):
-        """
-        Takes list of elements and their corresponding labels.
-        N is the number of samples.
-        The supported languages are DE and EN.
-        """
-        super().__init__()
-
-        lang = lang.upper()
-        if lang != "DE" and lang != "EN":
-            print("Error: Supported languages are EN and DE.")
-            return None
-
-        self.labels = labels
-        self.colors = colorspace(len(elements))
-        self.lang = lang
-
-    @abstractmethod
-    def plot(self, pick=None):
-        """
-        Returns figure of the picked elements.
-        """
-        pass
-
-    def save(self, pick=None, path="", filename="plot.png"):
-        """
-        Creates and saves diagramm at path/filename.
-        """
-        fig = self.plot(pick=pick)
-        fig.savefig(path + filename)
-
-    def show(self, pick=None):
-        """
-        Creates and shows diagramm.
-        """
-        fig = self.plot(pick=pick)
-        fig.show()
-
-class BodeDiagram(Diagramm):
+class BodeDiagramm(object):
     """
     Bode diagramm of an arbitrary number of transfer functions.
     """
@@ -675,8 +651,15 @@ class BodeDiagram(Diagramm):
         creates a bode diagramm from 10**start to 10**stop
         with a given list of ticks.
         """
-        if super().__init__(elements, labels, lang=lang) is None:
-            return None
+        lang = lang.upper()
+        if lang != "DE" and lang != "EN":
+            print("Error: Supported languages are EN and DE.")
+            print("Default: Language is set to EN.")
+            lang = "EN"
+
+        self.labels = labels
+        self.colors = colorspace(len(elements))
+        self.lang = lang
 
         self.omega = np.logspace(start=start, stop=stop, num=N)
 
@@ -739,12 +722,12 @@ class BodeDiagram(Diagramm):
 
         if self.lang == "DE":
             x_label = r"Kreisfrequenz $\omega \ / \ \frac{1}{s}$"
-            amp_label r"Betrag $|H(s)| / dB$"
-            phi_label = r"Phase $\varphi(H(s)) / °$"
+            amp_label = r"Betrag $|H(s)| \ / \ dB$"
+            phi_label = r"Phase $\varphi(H(s)) \ / \ °$"
         else:
             x_label = r"Circular Frequency $\omega \ / \ \frac{1}{s}$"
-            amp_label r"Amplitude $|H(s)| / dB$"
-            phi_label = r"Phase $\varphi(H(s)) / °$"
+            amp_label = r"Amplitude $|H(s)| \ / \ dB$"
+            phi_label = r"Phase $\varphi(H(s)) \ / \ °$"
 
         ax_amp.set_xlabel(x_label)
         ax_amp.set_ylabel(amp_label)
@@ -758,17 +741,38 @@ class BodeDiagram(Diagramm):
 
         return fig
 
+    def save(self, pick=None, path="", filename="plot.png"):
+        """
+        Creates and saves diagramm at path/filename.
+        """
+        fig = self.plot(pick=pick)
+        fig.savefig(path + filename)
+
+    def show(self, pick=None):
+        """
+        Creates and shows diagramm.
+        """
+        fig = self.plot(pick=pick)
+        fig.show()
+
 class StepResponse(object):
     """
     Step response of an arbitrary number of transfer functions.
     """
-    def __init__(self, functions, labels, duration, start=0, lang="DE"):
+    def __init__(self, elements, labels, duration, start=0, lang="DE"):
         """
         Sets functions, labels and colors as attributes.
         Computes sample rate, time and omega from duration and N.
         """
-        if super().__init__(elements, labels, lang=lang) is None:
-            return None
+        lang = lang.upper()
+        if lang != "DE" and lang != "EN":
+            print("Error: Supported languages are EN and DE.")
+            print("Default: Language is set to EN.")
+            lang = "EN"
+
+        self.labels = labels
+        self.colors = colorspace(len(elements))
+        self.lang = lang
 
         self.time = np.linspace(start, duration, 1024)
 
@@ -813,12 +817,12 @@ class StepResponse(object):
 
         ax.set_ylim(lim[0], lim[1])
 
+        x_label = r"Time $t \ / \ s$"
+        y_label = r"Step Response $w(t)$"
+
         if self.lang == "DE":
-            self.x_label = r"Zeit $t \ / \ s$"
-            self.y_label = r"Sprungantwort $w(t)$"
-        else:
-            self.x_label = r"Time $t \ / \ s$"
-            self.y_label = r"Step Response $w(t)$"
+            x_label = r"Zeit $t \ / \ s$"
+            y_label = r"Sprungantwort $w(t)$"
 
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
@@ -829,3 +833,17 @@ class StepResponse(object):
         ax.grid(b=True, which="both", axis="both")
 
         return fig
+
+    def save(self, pick=None, lim=None, path="", filename="plot.png"):
+        """
+        Creates and saves diagramm at path/filename.
+        """
+        fig = self.plot(pick=pick, lim=lim)
+        fig.savefig(path + filename)
+
+    def show(self, pick=None, lim=None):
+        """
+        Creates and shows diagramm.
+        """
+        fig = self.plot(pick=pick, lim=lim)
+        fig.show()

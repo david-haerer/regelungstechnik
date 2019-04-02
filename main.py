@@ -4,34 +4,35 @@ import regelungstechnik as rt
 # Example transfer function is a product of a PT1 and PT2 transfer function
 # F(s) = V / (Ts + 1) * 1 / ((s/omega)^2 + 2D/omega * s + 1)
 
-F1 = rt.PT1(T=2e-3, V=0.2)
-F2 = rt.PT2(omega=1000, D=0.2)
-F = rt.PROD([F1, F2])
+PT1 = rt.PT1(T=2e-3, V=0.2)
+PT2 = rt.PT2(omega=1000, D=0.2)
+PT3 = rt.PROD([PT1, PT2])
 
 
 # Make a list of the transfer functions with corresponding labels
 
-functions = [F, F1, F2]
+elements = [PT3, PT1, PT2]
 
 labels = [
-    r"$F = F1 \cdot F2$",
-    r"$F_1 = PT_1$",
-    r"$F_2 = PT_2$"
+    r"$H = H_1 \cdot H_2$",
+    r"$H_1 = PT_1$",
+    r"$H_2 = PT_2$"
 ]
 
 
 # Create a Bode-Diagram and save several plots
 
-ticks = [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2]
-bode = rt.BodeDiagram(functions, labels, start=1.0, stop=6.0, ticks=ticks)
-bode.save(pick=[], path="images/", filename="bode_canvas.png")
-bode.save(pick=[0], path="images/", filename="bode_single.png")
-bode.save(path="images/", filename="bode_all.png")
+bode = rt.BodeDiagramm(elements, labels,
+                    start=1.0, stop=6.0, ticks=[-7, 2], lang="EN")
+#bode.save(pick=[], path="images/", filename="bode_canvas.png")
+#bode.save(pick=[0], path="images/", filename="bode_single.png")
+#bode.save(path="images/", filename="bode_all.png")
 
 
 # Create a Step-Response and save several plots
 
-step = rt.StepResponse(functions, labels, duration=30e-3)
-step.save(pick=[], path="images/", filename="response_canvas.png", v_max=0.225)
-step.save(pick=[0], path="images/", filename="response_single.png", v_max=0.225)
-step.save(path="images/", filename="response_all.png", v_max=1.6)
+step = rt.StepResponse(elements, labels, duration=30e-3, lang="EN")
+step.save(pick=[2], path="images/", filename="pt2_step_response.png")
+#step.save(pick=[], path="images/", filename="response_canvas.png",lim=[0, 0.225])
+#step.save(pick=[0], path="images/", filename="response_single.png",lim=[0, 0.225])
+#step.save(path="images/", filename="response_all.png", lim=[0, 1.6])

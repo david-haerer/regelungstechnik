@@ -6,9 +6,14 @@ Create diagrams for control theory in python.
 
 This python module is still under development and may change at any time without notice!
 
----
+**WARNING**
+
+Currently only the frequency domain is usable (transfer function and bode diagramm). Time domain will leverage `Scipy` with the next updates.
+
 
 ## Contents
+
+---
 
 1. [Getting Started](#getting_started)
 2. [Naming](#names)
@@ -25,17 +30,19 @@ This python module is still under development and may change at any time without
     1. [Overview](#overview)
     2. [Nextup](#nextup)
 
----
 
 <a name="getting_started"></a>
 ## Getting Started
 
+---
+
 Download `regelungstechnik.py` and `main.py`. The example code in `main.py` should give you a good understanding of how the script works.
 
----
 
 <a name="names"></a>
 ## Naming
+
+---
 
 In this project, the following naming is used.
 
@@ -91,10 +98,11 @@ For sequences in the frequency domain, upper case letters are used.
 - Low pass `PT2`
 - Allowance `PD1`
 
----
 
 <a name="example"></a>
 ## Example
+
+---
 
 
 <a name="example1"></a>
@@ -171,10 +179,11 @@ This Step-Response shows all the created transfer functions for comparison.
 
 ![Step-Response of all transfer functions](images/response_all.png)
 
----
 
 <a name="roadmap"></a>
 ## Roadmap
+
+---
 
 The goal is to relabel `ToDo` items into `Done` while having as few items as possible in `Limbo`.
 
@@ -185,7 +194,7 @@ This project contains the following features:
 
 - `Done` Create and evaluate transfer functions
 - `Done` Evaluate the impulse response of a transfer function
-- `Limbo` Plot bode diagramms
+- `Done` Plot bode diagramms
 - `Limbo` Plot step responses
 - `ToDo` Add a license to the project.
 - `ToDo` Plot responses to arbitrary input functions
@@ -196,8 +205,9 @@ This project contains the following features:
 <a name="nextup"></a>
 ### Nextup
 
-*Test elements and diagramms.*
+*Leverage `Scipy` with `lti`, `impulse2` and `step2` for elements and time plots.*
 
+- `Limbo` Test elements and diagramms - Step response not working.
 - `Done` Fix bode diagramm and step response to work with elements.
 - `Done` Refactor composite transfer functions into composite element classes.
 - `Done` Add `h(t)` and `w(t)` for `PD1` and add `PD2`.
