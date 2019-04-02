@@ -2,15 +2,14 @@
 
 Create diagrams for control theory in python.
 
-**WARNINGS**
-
 ---
 
-This python module is still under development and may change at any time without notice!
-
+**WARNING**
 ---
 
-Currently only the frequency domain is usable (transfer function and bode diagramm). Time domain will leverage `Scipy` with the next updates.
+
+- This python module is still under development and may change at any time without notice!
+- Currently only the frequency domain is usable (transfer function and bode diagramm). Time domain will leverage `Scipy` with the next updates.
 
 ---
 
