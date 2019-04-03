@@ -392,14 +392,18 @@ class BodeDiagramm(object):
         ax_phi.set_ylim([self.phi_ticks[0], self.phi_ticks[-1]])
         ax_phi.set_yticks(self.phi_ticks)
 
+        x_label = r"Circular Frequency "
+        amp_label = r"Amplitude "
+        phi_label = r"Phase "
+
         if self.lang == "DE":
-            x_label = r"Kreisfrequenz $\ \omega \ / \ \frac{1}{s}$"
-            amp_label = r"Betrag $\ |H(s)| \ / \ dB$"
-            phi_label = r"Phase $\ \varphi(H(s)) \ / \ ^\circ$"
-        else:
-            x_label = r"Circular Frequency $\ \omega \ / \ \frac{1}{s}$"
-            amp_label = r"Amplitude $\ |H(s)| \ / \ dB$"
-            phi_label = r"Phase $\ \varphi(H(s)) \ / \ ^\circ$"
+            x_label = r"Kreisfrequenz "
+            amp_label = r"Betrag "
+            phi_label = r"Phase "
+
+        x_label += r"$\ \omega \ / \ \frac{1}{s}$"
+        amp_label += r"$\ |H(j \omega)| \ / \ dB$"
+        phi_label += r"$\ \varphi(H(j \omega))) \ / \ ^\circ$"
 
         ax_amp.set_xlabel(x_label)
         ax_amp.set_ylabel(amp_label)
@@ -491,8 +495,6 @@ class StepResponse(object):
 
         ax.set_ylim(lim[0], lim[1])
 
-        time_label = r"$\ t \ / \ " + self.time_prefix + r"s$"
-        w_label = r"$\ w(t)$"
         x_label = r"Time "
         y_label = r"Step Response "
 
@@ -500,8 +502,11 @@ class StepResponse(object):
             x_label = r"Zeit "
             y_label = r"Sprungantwort "
 
-        ax.set_xlabel(x_label + time_label)
-        ax.set_ylabel(y_label + w_label)
+        x_label += r"$\ t \ / \ " + self.time_prefix + r"s$"
+        y_label += r"$\ w(t)$"
+
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
 
         if not canvas:
             ax.legend(loc="upper right")
