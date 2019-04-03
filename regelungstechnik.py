@@ -403,7 +403,7 @@ class BodeDiagramm(object):
 
         x_label += r"$\ \omega \ / \ \frac{1}{s}$"
         amp_label += r"$\ |H(j \omega)| \ / \ dB$"
-        phi_label += r"$\ \varphi(H(j \omega))) \ / \ ^\circ$"
+        phi_label += r"$\ \varphi(H(j \omega)) \ / \ ^\circ$"
 
         ax_amp.set_xlabel(x_label)
         ax_amp.set_ylabel(amp_label)
