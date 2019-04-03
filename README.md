@@ -180,8 +180,7 @@ The goal is to relabel `ToDo` items into `Done` while having as few items as pos
 
 This project contains the following features:
 
-- `Done` Create and evaluate transfer functions.
-- `Done` Evaluate the impulse response of a transfer function.
+- `Done` Create and evaluate lti elements in time and frequency domain.
 - `Done` Plot bode diagramms.
 - `Done` Plot step responses.
 - `ToDo` Plot impulse and ramp response.
@@ -194,6 +193,8 @@ This project contains the following features:
 
 <a name="nextup"></a>
 ### Nextup
+
+*Add `PI`, `PID` and `FEEDBACK` elements.*
 
 - `Done` Leverage `Scipy` with `lti` for elements and time plots.
 - `Limbo` Test elements and diagramms - Step response not working.
