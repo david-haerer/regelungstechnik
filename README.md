@@ -104,20 +104,20 @@ The example code imports the Regelungstechnik module and creates transfer functi
 ```python
 import regelungstechnik as rt
 
-F1 = rt.PT1(T=2e-3, V=0.2)
-F2 = rt.PT2(omega=1000, D=0.2)
-F = rt.prod([F1, F2])
+PT1 = rt.PT1(T=2e-3, V=0.2)
+PT2 = rt.PT2(omega=1000, D=0.2)
+PT3 = rt.PROD([PT1, PT2])
 ```
 
 These functions are grouped in a list and a list of corresponding labels is added. The labels can use LaTeX formatting.
 
 ```python
-functions = [F, F1, F2]
+elements = [PT3, PT1, PT2]
 
 labels = [
-    r"$F = F1 \cdot F2$",
-    r"$F_1 = PT_1$",
-    r"$F_2 = PT_2$"
+    r"$H = PT_1 \cdot PT_2$",
+    r"$PT_1$",
+    r"$PT_2$"
 ]
 ```
 
