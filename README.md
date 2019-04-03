@@ -2,11 +2,7 @@
 
 Create diagrams for control theory in python.
 
----
-
 **WARNING**
----
-
 
 - This python module is still under development and may change at any time without notice!
 - Currently only the frequency domain is usable (transfer function and bode diagramm). Time domain will leverage `Scipy` with the next updates.
@@ -30,6 +26,7 @@ Create diagrams for control theory in python.
     1. [Overview](#overview)
     2. [Nextup](#nextup)
 
+---
 
 <a name="getting_started"></a>
 ## Getting Started
@@ -130,8 +127,7 @@ labels = [
 Next up, a Bode-Diagram is created and several plots saved. The `ticks` are used for the dB and phase axis. On default they are spaced 20dB / 45° apart.
 
 ```python
-ticks = [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2]
-bode = rt.BodeDiagram(functions, labels, start=1.0, stop=6.0, ticks=ticks)
+bode = rt.BodeDiagramm(elements, labels, start=1.0, stop=5.0, ticks=[-7, 2], lang="EN")
 bode.save(pick=[], path="images/", filename="bode_canvas.png")
 bode.save(pick=[0], path="images/", filename="bode_single.png")
 bode.save(path="images/", filename="bode_all.png")
@@ -155,10 +151,10 @@ This Bode-Diagram shows all the created transfer functions for comparison.
 The last piece of code creates a Step-Response and saves several plots.
 
 ```python
-step = rt.StepResponse(functions, labels, duration=30e-3)
-step.save(pick=[], filename="response_canvas.png", v_max=0.225)
-step.save(pick=[0], filename="response_single.png", v_max=0.225)
-step.save(filename="response_all.png", v_max=1.6)
+step = rt.StepResponse(elements, labels, duration=30e-3, lang="EN")
+step.save(pick=[], path="images/", filename="response_canvas.png",lim=[0, 0.225])
+step.save(pick=[0], path="images/", filename="response_single.png",lim=[0, 0.225])
+step.save(path="images/", filename="response_all.png", lim=[0, 1.6])
 ```
 
 An empty Step-Response can be used as a canvas for hand sketches. It only provides marks on the diagram axis.
@@ -184,10 +180,11 @@ The goal is to relabel `ToDo` items into `Done` while having as few items as pos
 
 This project contains the following features:
 
-- `Done` Create and evaluate transfer functions
-- `Done` Evaluate the impulse response of a transfer function
-- `Done` Plot bode diagramms
-- `Limbo` Plot step responses
+- `Done` Create and evaluate transfer functions.
+- `Done` Evaluate the impulse response of a transfer function.
+- `Done` Plot bode diagramms.
+- `Done` Plot step responses.
+- `ToDo` Plot impulse and ramp response.
 - `ToDo` Add support for all platforms.
 - `ToDo` Add a license to the project.
 - `ToDo` Plot responses to arbitrary input functions
@@ -198,8 +195,7 @@ This project contains the following features:
 <a name="nextup"></a>
 ### Nextup
 
-*Leverage `Scipy` with `lti`, `impulse2` and `step2` for elements and time plots.*
-
+- `Done` Leverage `Scipy` with `lti` for elements and time plots.
 - `Limbo` Test elements and diagramms - Step response not working.
 - `Done` Fix bode diagramm and step response to work with elements.
 - `Done` Refactor composite transfer functions into composite element classes.

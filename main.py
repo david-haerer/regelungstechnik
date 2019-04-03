@@ -14,25 +14,23 @@ PT3 = rt.PROD([PT1, PT2])
 elements = [PT3, PT1, PT2]
 
 labels = [
-    r"$H = H_1 \cdot H_2$",
-    r"$H_1 = PT_1$",
-    r"$H_2 = PT_2$"
+    r"$H = PT_1 \cdot PT_2$",
+    r"$PT_1$",
+    r"$PT_2$"
 ]
 
 
 # Create a Bode-Diagram and save several plots
 
-bode = rt.BodeDiagramm(elements, labels,
-                    start=1.0, stop=6.0, ticks=[-7, 2], lang="EN")
-#bode.save(pick=[], path="images/", filename="bode_canvas.png")
-#bode.save(pick=[0], path="images/", filename="bode_single.png")
-#bode.save(path="images/", filename="bode_all.png")
+bode = rt.BodeDiagramm(elements, labels, start=1.0, stop=5.0, ticks=[-7, 2], lang="EN")
+bode.save(pick=[], path="images/", filename="bode_canvas.png")
+bode.save(pick=[0], path="images/", filename="bode_single.png")
+bode.save(path="images/", filename="bode_all.png")
 
 
 # Create a Step-Response and save several plots
 
 step = rt.StepResponse(elements, labels, duration=30e-3, lang="EN")
-step.save(pick=[2], path="images/", filename="pt2_step_response.png")
-#step.save(pick=[], path="images/", filename="response_canvas.png",lim=[0, 0.225])
-#step.save(pick=[0], path="images/", filename="response_single.png",lim=[0, 0.225])
-#step.save(path="images/", filename="response_all.png", lim=[0, 1.6])
+step.save(pick=[], path="images/", filename="response_canvas.png",lim=[0, 0.225])
+step.save(pick=[0], path="images/", filename="response_single.png",lim=[0, 0.225])
+step.save(path="images/", filename="response_all.png", lim=[0, 1.6])

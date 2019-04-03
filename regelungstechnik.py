@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from scipy import signal
+from numpy.polynomial import polynomial
+from scipy.signal import lti, TransferFunction
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
-from abc import ABC, abstractmethod
 
 
 # Plotting
@@ -37,79 +37,6 @@ def colorspace(num, saturation=1, value=0.8, start=0.0):
     return colors
 
 
-# String representations
-
-def str_V(V, lin=True, dB=True, prefix=False, text="V"):
-    """
-    Convert V into a string representation.
-    Choose if you want the linear or dB value.
-    Choose if V shall get its metric prefix.
-    The displayed name can be specified in text.
-    """
-    if prefix:
-        V, pre = unify(V)
-    else:
-        pre = ""
-
-    val = text
-
-    if lin:
-        val += " = " + str(V) + pre
-
-    if dB:
-        val += " = " + str(dB(V)) + "dB"
-
-    return val
-
-def str_T(T, prefix=True, text="T"):
-    """
-    Convert T into a string representation.
-    Choose if T shall get its metric prefix.
-    The displayed name can be specified in text.
-    """
-    if prefix:
-        T, pre = unify(T)
-    else:
-        pre = ""
-
-    val = text
-    val += " = " + str(T) + pre + "s"
-
-    return val
-
-def str_omega(omega, prefix=True, text="omega"):
-    """
-    Convert omega into a string representation.
-    Choose if omega shall get its metric prefix.
-    The displayed name can be specified in text.
-    """
-    if prefix:
-        omega, pre = unify(omega)
-    else:
-        pre = ""
-
-    val = text
-    val += " = " + str(omega) + pre + "/s"
-
-    return val
-
-def str_f(f, prefix=True, text="f"):
-    """
-    Convert f into a string representation.
-    Choose if f shall get its metric prefix.
-    The displayed name can be specified in text.
-    """
-    if prefix:
-        f, pre = unify(f)
-    else:
-        pre = ""
-
-    val = text
-    val += " = " + str(f) + pre + "Hz"
-
-    return val
-
-
 # Basic functions
 
 def delta(t):
@@ -139,9 +66,9 @@ def one(t, dtype=np.float64):
 # Transformations
 
 def unify(val, threshold=0.1):
-    prefix = ["",
-              "k", "M", "G", "T", "P", "E", "Z", "Y",
-              "y", "z", "a", "f", "p", "n", "µ", "m"]
+    prefix = [r"",
+              r"k", r"M", r"G", r"T", r"P", r"E", r"Z", r"Y",
+              r"y", r"z", r"a", r"f", r"p", r"n", r"µ", r"m"]
 
     i = 0
 
@@ -193,13 +120,6 @@ def angle(val, min, max):
         phi[phi - 360 > min] -= 360
     return phi
 
-def integrate(y, t):
-    y = np.asarray(y, dtype=np.float64)
-    delta = t[1] - t[0]
-    val = delta * y.cumsum()
-    val = y.cumsum()
-    return val
-
 def fft(y):
     l = y.size // 2 + 1
     val = np.fft.fft(y)
@@ -211,35 +131,69 @@ def ifft(Y):
     val = np.fft.irfft(Y[:l])
     return val
 
+def polyadd(a, b):
+    """
+    Add polynomial a by polynomial b.
+    a and b are lists from highest order term to lowest.
+    """
+    val = polynomial.polyadd(a[::-1], b[::-1])
+    val = val[::-1]
+    return val
+
+def polymul(a, b):
+    """
+    Multiply polynomial a by polynomial b.
+    a and b are lists from highest order term to lowest.
+    """
+    val = polynomial.polymul(a[::-1], b[::-1])
+    val = val[::-1]
+    return val
+
 
 # Elements
 
-class Element(ABC):
-    @abstractmethod
+class Element(object):
+    def __init__(self, counter, denominator):
+        """
+        An element is described by the counter and denominator of its transfer function. It has corresponding scipy lti and TransferFunction object as attributes.
+        counter and denominator are list from highest order term to lowest.
+        """
+        self.counter = counter
+        self.denominator = denominator
+        self.sys = lti(counter, denominator)
+        self.tf = TransferFunction(counter, denominator)
+
     def H(self, s):
         """
         The transfer function H(s).
         """
-        pass
+        s = np.asarray(s, dtype=np.complex64)
+        val = self.sys.freqresp()[1]
+        return val
 
-    @abstractmethod
+    def bode(self, omega):
+        """
+        The Bode amplitude and phase data.
+        """
+        omega = np.asarray(omega, dtype=np.complex64)
+        omega, amp, phi = self.sys.bode(w=omega, n=512)
+        return omega, amp, phi
+
     def h(self, t):
         """
         The impulse response h(t).
         """
-        pass
+        t = np.asarray(t, dtype=np.float64)
+        val = self.sys.impulse(T=t, N=512)[1]
+        return val
 
-    @abstractmethod
     def w(self, t):
-
         """
         The step response w(t).
         """
-        pass
-
-    @abstractmethod
-    def __str__(self):
-        pass
+        t = np.asarray(t, dtype=np.float64)
+        val = self.sys.step(T=t, N=512)[1]
+        return val
 
 class P(Element):
     def __init__(self, V=1, dB=False):
@@ -247,122 +201,30 @@ class P(Element):
         The basic element P (proportional).
         V may be given in dB.
         """
-        super().__init__()
-
         if dB:
             V = lin(V)
 
         self.V = V
 
-    def H(self, s):
-        """
-        The transfer function H(s) = V.
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = self.V * np.ones(shape=s.shape, dtype=np.complex64)
-        return val
-
-    def h(self, t):
-        """
-        The impulse response h(t) = [V, 0, ...]
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = np.zeros(shape=t.shape, dtype=np.float64)
-        val[t == 0] = self.V
-        return val
-
-    def w(self, t):
-        """
-        The step response w(t) = V
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = self.V * np.ones(shape=t.shape, dtype=np.float64)
-        val *= step(t)
-        return val
-
-    def __str__(self):
-        val = "Gain P"
-        val += " with " + str_V(self.V)
-        return val
+        super().__init__([V], [1])
 
 class I(Element):
     def __init__(self, T=1):
         """
         The basic element I (integrator).
         """
-        super().__init__()
-
         self.T = T
 
-    def H(self, s):
-        """
-        The transfer function H(s) = 1 / Ts.
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = 1 / (self.T * s)
-        return val
-
-    def h(self, t):
-        """
-        The impulse response h(t) = V.
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = 1 / self.T * np.ones(shape=t.shape, dtype=np.float64)
-        val *= step(t)
-        return val
-
-    def w(self, t):
-        """
-        The step response w(t) = 1 / T * t.
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = 1 / self.T * t
-        val *= step(t)
-        return val
-
-    def __str__(self):
-        val = "Integrator I"
-        val += " with " + str_T(self.T)
-        return val
+        super().__init__([1], [T, 0])
 
 class D(Element):
     def __init__(self, T=1):
         """
         The basic element D (differentiator).
         """
-        super().__init__()
-
         self.T = T
 
-    def H(self, s):
-        """
-        The transfer function H(s) = T * s.
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = self.T * s
-        return val
-
-    def h(self, t):
-        """
-        The impulse response h(t) = 0.
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = np.zeros(shape=t.shape, dtype=np.float64)
-        return val
-
-    def w(self, t):
-        """
-        The step response w(t) = [1/T, 0, ...].
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = np.zeros(shape=t.shape, dtype=np.float64)
-        val[t == 0] = 1 / self.T
-        return val
-
-    def __str__(self):
-        val = "Differentiator D"
-        val += " with " + str_T(self.T)
-        return val
+        super().__init__([T, 0], [1])
 
 class PT1(Element):
     def __init__(self, T=1, V=1, dB=False):
@@ -370,45 +232,13 @@ class PT1(Element):
         The basic element PT1 (low pass of order 1).
         V may be given in dB.
         """
-        super().__init__()
-
         if dB:
             V = lin(V)
 
         self.T = T
         self.V = V
 
-    def H(self, s):
-        """
-        The transfer function H(s) = V / (Ts + 1).
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = self.V / (self.T * s + 1)
-        return val
-
-    def h(self, t):
-        """
-        The impulse response h(t).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = self.V / self.T * np.exp(-1 * t / self.T)
-        val *= step(t)
-        return val
-
-    def w(self, t):
-        """
-        The step response w(t).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = self.V * (1 - np.exp(-1 * t / self.T))
-        val *= step(t)
-        return val
-
-    def __str__(self):
-        val = "Low pass PT1 of order 1"
-        val += " with " + str_V(self.V)
-        val += " and " + str_T(self.T)
-        return val
+        super().__init__([V], [T, 1])
 
 class PT2(Element):
     def __init__(self, omega=1, D=1, V=1, dB=False):
@@ -416,8 +246,6 @@ class PT2(Element):
         The basic element PT2 (low pass of order 2).
         V may be given in dB.
         """
-        super().__init__()
-
         if D < 0:
             print("Error: Damping must not be negative.")
             return None
@@ -429,127 +257,22 @@ class PT2(Element):
         self.D = D
         self.V = V
 
-    def H(self, s):
-        """
-        The transfer function H(s) = V / (s/omega ** 2 + 2D/omega * s + 1).
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        V = self.V
-        omega = self.omega
-        D = self.D
-        val = V / ((s / omega) ** 2 + (2 * D / omega) * s + 1)
-        return val
+        super().__init__([1], [1 / (omega ** 2), 2 * D / omega, 1])
 
-    def h(self, t):
-        """
-        The impulse response h(t) of a PT2 at different dampings.
-        """
-        t = np.asarray(t, dtype=np.float64)
-
-        V = self.V
-        omega = self.omega
-        D = self.D
-
-        if D == 0:
-            val = V / (2 * omega) * np.sin(omega * t)
-        if D > 0 and D < 1:
-            val = V / (2 * omega * np.sqrt(1 - D*D))
-            val *= np.exp(-1 * D * omega * t)
-            val *= np.sin(np.sqrt(1 - D*D) * omega * t)
-        elif D == 1:
-            val = V * omega * (2 - omega * t) * np.exp(-1 * omega * t)
-        else:
-            D1 = np.sqrt(D ** 2 - 1)
-            val = -1 * V * omega / (2 * D1)
-            val *= np.exp(-1 * (D - D1) * omega * t)
-
-        val *= step(t)
-
-        return val
-
-    def w(self, t):
-        """
-        The step response w(t) of a PT2 at different dampings.
-        """
-        t = np.asarray(t, dtype=np.float64)
-
-        V = self.V
-        print("V = " + str(V))
-        omega = self.omega
-        print("omega = " + str(omega))
-        D = self.D
-        print("D = " + str(D))
-
-        if D == 0:
-            val = V - V * np.cos(omega * t)
-        elif D > 0 and D < 1:
-            D1 = np.sqrt(1 - D ** 2)
-            print("D1 = " + str(D1))
-            theta = np.arctan(-1 * D / D1)
-            print("theta = " + str(theta))
-
-            val = V * (1 + 1 / (2 * D1) * np.exp(-1 * D1 * omega * t) * np.cos(D1 * omega * t - np.pi - np.arctan(-1 * D / D1)))
-        elif D == 1:
-            val = V - V * (1 - omega * t) * np.exp(-1 * omega * t)
-        else:
-            D1 = np.sqrt(D ** 2 - 1)
-            val = V / (2 * (D - D1) * D1)
-            val *= np.exp(-1 * (D - D1) * omega * t)
-
-        val *= step(t)
-
-        return val
-
-    def __str__(self):
-        val = "Low pass PT2 of order 2"
-        val += " with " + str_V(self.V)
-        val += " and " + str_omega(self.omega)
-        val += " and " + str_V(self.D, dB=False, text="D")
-        return val
-
-class PD1(Element):
-    def __init__(self, T=1, V=1, dB=False):
+class PD(Element):
+    def __init__(self, T=1, V=1, dB=False, Tv=0):
         """
         The basic element PD1 (allowance of order 1).
         V may be given in dB.
         """
-        super().__init__()
-
         if dB:
             V = lin(V)
 
         self.T = T
         self.V = V
+        self.Tv = Tv
 
-    def H(self, s):
-        """
-        The transfer function H(s) = V * (Ts + 1).
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = self.V * (self.T * s + 1)
-        return val
-
-    def h(self, t):
-        """
-        The impulse response h(t).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = self.V * delta(self.t)
-        return val
-
-    def w(self, t):
-        """
-        The step response w(t).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = self.V * (self.T * delta(t) + step(t))
-        return val
-
-    def __str__(self):
-        val = "Allowance PD1 of order 1"
-        val += " with " + str_V(self.V)
-        val += " and " + str_T(self.T)
-        return val
+        super().__init__([T * V, V], [Tv, 1])
 
 class PROD(Element):
     def __init__(self, elements):
@@ -557,42 +280,15 @@ class PROD(Element):
         The composite element PROD.
         It linkes the given elements in seriell.
         """
-        super().__init__()
         self.elements = elements
 
-    def H(self, s):
-        """
-        The transfer function H(s) = PROD(elements.H).
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = np.ones(s.size, dtype=np.complex64)
-        for e in self.elements:
-            val *= e.H(s)
-        return val
+        counter, denominator = [1], [1]
 
-    def h(self, t):
-        """
-        The impulse response h(t) = CONV(elements.h).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = delta(t)
-        for e in self.elements:
-            val = np.convolve(val, e.h(t), 'same')
-        return val
+        for e in elements:
+            counter = polymul(counter, e.counter)
+            denominator = polymul(denominator, e.denominator)
 
-    def w(self, t):
-        """
-        The step response w(t) = INT(h(t)).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = integrate(self.h(t), t)
-        return val
-
-    def __str__(self):
-        val = ""
-        for e in self.elements:
-            val += str(e) + "\n"
-        return val
+        super().__init__(counter, denominator)
 
 class SUM(Element):
     def __init__(self, elements):
@@ -600,42 +296,19 @@ class SUM(Element):
         The composite element SUM.
         It linkes the given elements in parallel.
         """
-        super().__init__()
         self.elements = elements
 
-    def H(self, s):
-        """
-        The transfer function H(s) = PROD(elements.H).
-        """
-        s = np.asarray(s, dtype=np.complex64)
-        val = np.zeros(s.size, dtype=np.complex64)
-        for e in self.elements:
-            val += e.H(s)
-        return val
+        counter, denominator = [0], [1]
 
-    def h(self, t):
-        """
-        The impulse response h(t).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = np.zeros(t)
-        for e in self.elements:
-            val += e.h(t)
-        return val
+        for e in elements:
+            expander = e.counter
+            remains = elements[:].remove(e)
+            for r in remains:
+                expander = polymul(expander, r.denominator)
+            counter = polyadd(counter, expander)
+            denominator = polymul(denominator, e.denominator)
 
-    def w(self, t):
-        """
-        The step response w(t).
-        """
-        t = np.asarray(t, dtype=np.float64)
-        val = integrate(self.h(t), t)
-        return val
-
-    def __str__(self):
-        val = ""
-        for e in self.elements:
-            val += str(e) + "\n"
-        return val
+        super().__init__(counter, denominator)
 
 
 # Diagramms
@@ -666,22 +339,21 @@ class BodeDiagramm(object):
         ticks = np.arange(ticks[0], ticks[1] + 1)
         self.amp_ticks = delta_amp * ticks
         self.phi_ticks = delta_phi * ticks
-        phi_min, phi_max = self.phi_ticks[0], self.phi_ticks[-1]
 
         self.amps = []
         self.phis = []
 
         for e in elements:
-            spectrum = e.H(1j * self.omega)
-            self.amps.append(dB(spectrum))
-            self.phis.append(angle(spectrum, phi_min, phi_max))
+            omega, amp, phi = e.bode(self.omega)
+            self.amps.append(amp)
+            self.phis.append(phi)
 
     def plot(self, pick=None):
         """
         Returns matplotlib figure of the bode diagramm.
         """
         fig, ax_amp = plt.subplots(figsize=(8, 4.5), dpi=240)
-        fig.subplots_adjust(left=0.1, right=0.9, bottom=0.15, top=0.95)
+        fig.subplots_adjust(left=0.125, right=0.875, bottom=0.15, top=0.95)
         ax_phi = ax_amp.twinx()
 
         ax_amp.set_xscale("log")
@@ -696,7 +368,7 @@ class BodeDiagramm(object):
 
         if pick is not None:
             pick = np.asarray(pick, dtype=int)
-            if pick.size == 0:
+            if pick.size == 0 or len(amps) == 0:
                 canvas = True
             amps = amps[pick]
             phis = phis[pick]
@@ -721,13 +393,13 @@ class BodeDiagramm(object):
         ax_phi.set_yticks(self.phi_ticks)
 
         if self.lang == "DE":
-            x_label = r"Kreisfrequenz $\omega \ / \ \frac{1}{s}$"
-            amp_label = r"Betrag $|H(s)| \ / \ dB$"
-            phi_label = r"Phase $\varphi(H(s)) \ / \ °$"
+            x_label = r"Kreisfrequenz $\ \omega \ / \ \frac{1}{s}$"
+            amp_label = r"Betrag $\ |H(s)| \ / \ dB$"
+            phi_label = r"Phase $\ \varphi(H(s)) \ / \ ^\circ$"
         else:
-            x_label = r"Circular Frequency $\omega \ / \ \frac{1}{s}$"
-            amp_label = r"Amplitude $|H(s)| \ / \ dB$"
-            phi_label = r"Phase $\varphi(H(s)) \ / \ °$"
+            x_label = r"Circular Frequency $\ \omega \ / \ \frac{1}{s}$"
+            amp_label = r"Amplitude $\ |H(s)| \ / \ dB$"
+            phi_label = r"Phase $\ \varphi(H(s)) \ / \ ^\circ$"
 
         ax_amp.set_xlabel(x_label)
         ax_amp.set_ylabel(amp_label)
@@ -781,12 +453,14 @@ class StepResponse(object):
         for e in elements:
             self.steps.append(e.w(self.time))
 
+        self.time, self.time_prefix = unify(self.time)
+
     def plot(self, pick=None, lim=None):
         """
         Returns matplotlib figure of the step responses.
         """
         fig, ax = plt.subplots(figsize=(8, 4.5), dpi=240)
-        fig.subplots_adjust(left=0.1, right=0.95, bottom=0.15, top=0.95)
+        fig.subplots_adjust(left=0.125, right=0.925, bottom=0.15, top=0.95)
 
         steps = np.asarray(self.steps)
         labels = np.asarray(self.labels)
@@ -796,7 +470,7 @@ class StepResponse(object):
 
         if pick is not None:
             pick = np.asarray(pick, dtype=int)
-            if pick.size == 0:
+            if pick.size == 0 or len(steps) == 0:
                 canvas = True
             steps = steps[pick]
             labels = labels[pick]
@@ -817,15 +491,17 @@ class StepResponse(object):
 
         ax.set_ylim(lim[0], lim[1])
 
-        x_label = r"Time $t \ / \ s$"
-        y_label = r"Step Response $w(t)$"
+        time_label = r"$\ t \ / \ " + self.time_prefix + r"s$"
+        w_label = r"$\ w(t)$"
+        x_label = r"Time "
+        y_label = r"Step Response "
 
         if self.lang == "DE":
-            x_label = r"Zeit $t \ / \ s$"
-            y_label = r"Sprungantwort $w(t)$"
+            x_label = r"Zeit "
+            y_label = r"Sprungantwort "
 
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
+        ax.set_xlabel(x_label + time_label)
+        ax.set_ylabel(y_label + w_label)
 
         if not canvas:
             ax.legend(loc="upper right")
