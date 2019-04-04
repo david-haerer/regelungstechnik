@@ -259,6 +259,17 @@ class PT2(Element):
 
         super().__init__([1], [1 / (omega ** 2), 2 * D / omega, 1])
 
+    def __init__(self, counter=[1], denominator=[1, 2, 1]):
+        """
+        The basic element PT2 (low pass of order 2).
+        counter and denominator are lists of the coefficients.
+        """
+        self.V = counter[0] / denominator[2]
+        self.omega = np.sqrt(denominator[2] / denominator[0])
+        self.D = denominator[1] / denominator[2] * self.omega / 2
+
+        super().__init__(counter, denominator)
+
 class PD(Element):
     def __init__(self, T=1, V=1, dB=False, Tv=0):
         """
