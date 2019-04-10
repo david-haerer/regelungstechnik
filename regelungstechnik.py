@@ -195,6 +195,42 @@ class Element(object):
         val = self.sys.step(T=t, N=512)[1]
         return val
 
+    def __add__(self, other):
+        """
+        self + other
+        """
+        return SUM([self, other])
+
+    def __radd__(self, other):
+        """
+        other + self
+        """
+        return self.__add__(other)
+
+    def __iadd__(self, other):
+        """
+        self += other
+        """
+        return self.__add__(other)
+
+    def __mul__(self, other):
+        return PROD([self, other])
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __imull(self, other):
+        return self.__mul__(other)
+
+    def __matmul__(self, other):
+        return FEEDBACK(self, other)
+
+    def __rmatmul__(self, other):
+        return FEEDBACK(other, self)
+
+    def __imatmul__(self, other):
+        return self.__matmul__(other)
+
 class P(Element):
     def __init__(self, V=1, dB=False):
         """
@@ -257,18 +293,7 @@ class PT2(Element):
         self.D = D
         self.V = V
 
-        super().__init__([1], [1 / (omega ** 2), 2 * D / omega, 1])
-
-    def __init__(self, counter=[1], denominator=[1, 2, 1]):
-        """
-        The basic element PT2 (low pass of order 2).
-        counter and denominator are lists of the coefficients.
-        """
-        self.V = counter[0] / denominator[2]
-        self.omega = np.sqrt(denominator[2] / denominator[0])
-        self.D = denominator[1] / denominator[2] * self.omega / 2
-
-        super().__init__(counter, denominator)
+        super().__init__([V], [1 / (omega ** 2), 2 * D / omega, 1])
 
 class PD(Element):
     def __init__(self, T=1, V=1, dB=False, Tv=0):
@@ -291,13 +316,30 @@ class PROD(Element):
         The composite element PROD.
         It linkes the given elements in seriell.
         """
-        self.elements = elements
+        self.elements = elements[:]
+
+        # Cancel polynomials
+
+        counters = [e.counter for e in self.elements]
+        denominators = [e.denominator for e in self.elements]
+
+        for i in range(len(elements)):
+            for j in range(len(elements)):
+                if counters[i] == denominators[j]:
+                    counters[i] = [1]
+                    denominators[j] = [1]
+                    break
+
+        counters.remove([1])
+        denominators.remove([1])
 
         counter, denominator = [1], [1]
 
-        for e in elements:
-            counter = polymul(counter, e.counter)
-            denominator = polymul(denominator, e.denominator)
+        for c in counters:
+            counter = polymul(counter, c)
+
+        for d in denominators:
+            denominator = polymul(denominator, d)
 
         super().__init__(counter, denominator)
 
@@ -321,6 +363,17 @@ class SUM(Element):
 
         super().__init__(counter, denominator)
 
+class FEEDBACK(Element):
+    def __init__(self, feed, back):
+        """
+        The composite element FEEDBACK = feed / (1 + feed * back)
+        """
+        counter = polymul(feed.counter, back.denominator)
+        denominator_1 = polymul(feed.denominator, back.denominator)
+        denominator_2 = polymul(feed.counter, back.counter)
+        denominator = polyadd(denominator_1, denominator_2)
+
+        super().__init__(counter, denominator)
 
 # Diagramms
 
