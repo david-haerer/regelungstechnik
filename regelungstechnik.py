@@ -372,6 +372,7 @@ class FEEDBACK(Element):
 
         super().__init__(counter, denominator)
 
+
 # Diagramms
 
 class BodeDiagramm(object):
