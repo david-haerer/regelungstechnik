@@ -592,3 +592,70 @@ class StepResponse(object):
         """
         fig = self.plot(pick=pick, lim=lim)
         fig.show()
+
+
+# Digital Controller
+
+class DigitalPID(object):
+    def __init__(self, V, Tn, Tv, delta_t, u_max=None):
+        self.KP = V * (Tn + Tv) / Tn
+        self.KI = V * delta_t / Tn
+        self.KD = V * Tv / delta_t
+
+        self.umax = u_max
+        self.e_old = 0
+        self.ui = 0
+
+    def __call__(self, target, real):
+        e = target - real
+
+        up = self.KP * e
+
+        ui = self.ui + self.KI * e
+
+        if self.umax is not None:
+            ui = min(ui, self.umax)
+            ui = max(ui, -1 * self.umax)
+
+        ud = self.KD * (e - self.e_old)
+
+        u = up + ui + ud
+
+        self.e_old = e
+        self.ui = ui
+
+        return u
+
+    def __str__(self, lang="DE"):
+        target = "soll" if lang == "DE" else "target"
+        real = "ist" if lang == "DE" else "real"
+        e_old = "e_alt" if lang == "DE" else "e_old"
+
+        code = f"float KP = {self.KP};\n"
+        code += f"float KI = {self.KI};\n"
+        code += f"float KD = {self.KD};\n"
+        code += f"\n"
+        code += f"float regler(float {target}, float {real}) {{\n"
+        code += f"    float e, u, up, ud;\n"
+        code += f"    static float ui = 0;\n"
+        code += f"    static float {e_old} = 0;\n"
+        code += f"\n"
+        code += f"    up = KP * e;\n"
+        code += f"    ui = ui + KI * e;\n"
+        code += f"    ud = KD * (e - {e_old});\n"
+        code += f"\n"
+
+        if self.umax is not None:
+            code += f"    if(ui > umax);\n"
+            code += f"        ui = umax;\n"
+            code += f"    if(ui < -umax);\n"
+            code += f"        ui = -umax;\n"
+            code += f"\n"
+
+        code += f"    u = up + ui + ud;\n"
+        code += f"    {e_old} = e;\n"
+        code += f"\n"
+        code += f"    return u;\n"
+        code += f"}"
+
+        return code
