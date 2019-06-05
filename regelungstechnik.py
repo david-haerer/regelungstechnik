@@ -260,7 +260,7 @@ class D(Element):
         """
         self.T = T
 
-        super().__init__([T, 0], [1])
+        super().__init__([T, 0], [0, 1])
 
 class PT1(Element):
     def __init__(self, T=1, V=1, dB=False):
@@ -309,6 +309,28 @@ class PD(Element):
         self.Tv = Tv
 
         super().__init__([T * V, V], [Tv, 1])
+
+class PI(Element):
+    def __init__(self, V=1, T=1, db=False):
+        if dB:
+            V = lin(V)
+
+        self.T = T
+        self.V = V
+
+        super().__init__([V * T, V], [T, 0])
+
+class PID(Element):
+    def __init__(self, V=1, TN=1, TV=1, db=False, Tv=0):
+        if dB:
+            V = lin(V)
+
+        self.V = V
+        self.TN = TN
+        self.TV = TV
+        self.Tv = Tv
+
+        super().__init__([V * TN * TV, V * (TN + TV), V], [TN * Tv, TN, 0])
 
 class PROD(Element):
     def __init__(self, elements):
@@ -389,7 +411,7 @@ class BodeDiagramm(object):
         lang = lang.upper()
         if lang != "DE" and lang != "EN":
             print("Error: Supported languages are EN and DE.")
-            print("Default: Language is set to EN.")
+            print("Language is set to EN.")
             lang = "EN"
 
         self.labels = labels
