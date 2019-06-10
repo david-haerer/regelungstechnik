@@ -103,12 +103,13 @@ def dB(val):
     """
     return 20 * np.log10(np.abs(val))
 
-def angle(val, min, max):
+def angle_norm(phi, min, max, convert=False):
     """
     Returns the phase value in degrees in the range between
     v_min and v_max of the given values.
     """
-    phi = np.angle(val, deg=True)
+    if convert:
+        phi = np.angle(phi, deg=True)
     # Move phi down
     while (phi > max).any():
         phi[phi > max] -= 360
@@ -116,7 +117,7 @@ def angle(val, min, max):
     while (phi < min).any():
         phi[phi < min] += 360
     # Move phi down as far as possible
-    while (phi - 360 > min).any():
+    while (phi - 360 >= min).any():
         phi[phi - 360 > min] -= 360
     return phi
 
@@ -254,13 +255,18 @@ class I(Element):
         super().__init__([1], [T, 0])
 
 class D(Element):
-    def __init__(self, T=1):
+    def __init__(self, T=1, real=True):
         """
         The basic element D (differentiator).
         """
         self.T = T
 
-        super().__init__([T, 0], [T*1e-6, 1])
+        if real:
+            Tv = T * 1e-6
+        else:
+            Tv = 0
+
+        super().__init__([T, 0], [Tv, 1])
 
 class PT1(Element):
     def __init__(self, T=1, V=1, dB=False):
@@ -307,6 +313,9 @@ class PD(Element):
         self.T = T
         self.V = V
         self.Tv = Tv
+        
+        if Tv == 0:
+            self.Tv = T * 1e-6
 
         super().__init__([T * V, V], [Tv, 1])
 
@@ -348,8 +357,8 @@ class PROD(Element):
         for i in range(len(elements)):
             for j in range(len(elements)):
                 if cs[i].size == ds[j].size and (cs[i] == ds[j]).all():
-                    cs[i] = [1]
-                    ds[j] = [1]
+                    cs[i] = np.ones(1)
+                    ds[j] = np.ones(1)
                     break
 
         counter, denominator = [1], [1]
@@ -395,14 +404,13 @@ class FEEDBACK(Element):
         super().__init__(counter, denominator)
 
 
-# ss
+# Diagrams
 
 class BodeDiagram(object):
     """
     Bode diagram of an arbitrary number of transfer functions.
     """
-    def __init__(self, elements, labels, start, stop, ticks,
-        delta_amp=20, delta_phi=45, N=1024, lang="DE"):
+    def __init__(self, elements, labels, start, stop, ticks, delta_amp=20, delta_phi=45, N=1024, lang="DE"):
         """
         Takes a list of elements with corresponding labels and
         creates a bode diagram from 10**start to 10**stop
@@ -430,7 +438,7 @@ class BodeDiagram(object):
         for e in elements:
             omega, amp, phi = e.bode(self.omega)
             self.amps.append(amp)
-            self.phis.append(phi)
+            self.phis.append(angle_norm(phi, self.phi_ticks[0], self.phi_ticks[-1]))
 
     def plot(self, pick=None):
         """
