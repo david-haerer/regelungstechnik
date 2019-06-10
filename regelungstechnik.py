@@ -260,7 +260,7 @@ class D(Element):
         """
         self.T = T
 
-        super().__init__([T, 0], [0, 1])
+        super().__init__([T, 0], [T*1e-6, 1])
 
 class PT1(Element):
     def __init__(self, T=1, V=1, dB=False):
@@ -395,17 +395,17 @@ class FEEDBACK(Element):
         super().__init__(counter, denominator)
 
 
-# Diagramms
+# ss
 
-class BodeDiagramm(object):
+class BodeDiagram(object):
     """
-    Bode diagramm of an arbitrary number of transfer functions.
+    Bode diagram of an arbitrary number of transfer functions.
     """
     def __init__(self, elements, labels, start, stop, ticks,
         delta_amp=20, delta_phi=45, N=1024, lang="DE"):
         """
         Takes a list of elements with corresponding labels and
-        creates a bode diagramm from 10**start to 10**stop
+        creates a bode diagram from 10**start to 10**stop
         with a given list of ticks.
         """
         lang = lang.upper()
@@ -434,7 +434,7 @@ class BodeDiagramm(object):
 
     def plot(self, pick=None):
         """
-        Returns matplotlib figure of the bode diagramm.
+        Returns matplotlib figure of the bode diagram.
         """
         fig, ax_amp = plt.subplots(figsize=(8, 4.5), dpi=240)
         fig.subplots_adjust(left=0.125, right=0.875, bottom=0.15, top=0.95)
@@ -503,14 +503,14 @@ class BodeDiagramm(object):
 
     def save(self, pick=None, path="", filename="plot.png"):
         """
-        Creates and saves diagramm at path/filename.
+        Creates and saves diagram at path/filename.
         """
         fig = self.plot(pick=pick)
         fig.savefig(path + filename)
 
     def show(self, pick=None):
         """
-        Creates and shows diagramm.
+        Creates and shows diagram.
         """
         fig = self.plot(pick=pick)
         fig.show()
@@ -601,14 +601,14 @@ class StepResponse(object):
 
     def save(self, pick=None, lim=None, path="", filename="plot.png"):
         """
-        Creates and saves diagramm at path/filename.
+        Creates and saves diagram at path/filename.
         """
         fig = self.plot(pick=pick, lim=lim)
         fig.savefig(path + filename)
 
     def show(self, pick=None, lim=None):
         """
-        Creates and shows diagramm.
+        Creates and shows diagram.
         """
         fig = self.plot(pick=pick, lim=lim)
         fig.show()

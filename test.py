@@ -3,9 +3,11 @@ import numpy as np
 
 
 def plot(elements, labels, name, start, stop, ticks, duration, lim):
-    bode = rt.BodeDiagramm(elements, labels, start=start, stop=stop, ticks=ticks, lang="DE")
+    print("Bode Diagram")
+    bode = rt.BodeDiagram(elements, labels, start=start, stop=stop, ticks=ticks, lang="DE")
     bode.save(path="tutorium/", filename=name + "_bode")
 
+    print("Step Diagram")
     step = rt.StepResponse(elements, labels, duration=duration, lang="DE")
     step.save(path="tutorium/", filename=name + "_step", lim=lim)
 
@@ -138,4 +140,4 @@ def PID():
 
 # --- SCRIPT ---
 
-PT3()
+D()
