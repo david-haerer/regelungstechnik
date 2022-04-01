@@ -2,3 +2,4 @@ __pycache__/
 tutorium.py
 tutorium/
 aufgabe*.py
+dist/
