@@ -31,6 +31,6 @@ bode.save(path="images/", filename="bode_all.png")
 # Create a Step-Response and save several plots
 
 step = rt.StepResponse(elements, labels, duration=30e-3, lang="EN")
-step.save(pick=[], path="images/", filename="response_canvas.png",lim=[0, 0.225])
-step.save(pick=[0], path="images/", filename="response_single.png",lim=[0, 0.225])
+step.save(pick=[], path="images/", filename="response_canvas.png", lim=[0, 0.225])
+step.save(pick=[0], path="images/", filename="response_single.png", lim=[0, 0.225])
 step.save(path="images/", filename="response_all.png", lim=[0, 1.6])
